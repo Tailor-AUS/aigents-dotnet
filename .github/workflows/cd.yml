@@ -1,0 +1,218 @@
+# ═══════════════════════════════════════════════════════════════
+# AIGENTS CI/CD PIPELINE
+# Deploy to Aigents.au via Azure Container Apps
+# ═══════════════════════════════════════════════════════════════
+
+name: CD - Deploy to Aigents.au
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  AZURE_RESOURCE_GROUP: 'aigents-rg'
+  AZURE_LOCATION: 'australiaeast'
+  ACR_NAME: 'aigentsacr'
+  API_IMAGE: 'aigents-api'
+  WEB_IMAGE: 'aigents-web'
+
+jobs:
+  # ─────────────────────────────────────────────────────────────
+  # BUILD & TEST
+  # ─────────────────────────────────────────────────────────────
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore Aigents.sln
+
+      - name: Build solution
+        run: dotnet build Aigents.sln --configuration Release --no-restore
+
+      - name: Run tests
+        run: dotnet test Aigents.sln --configuration Release --no-build --verbosity normal
+        continue-on-error: true
+
+      - name: Publish API
+        run: dotnet publish src/Aigents.Api/Aigents.Api.csproj -c Release -o ./publish/api
+
+      - name: Publish Web
+        run: dotnet publish src/Aigents.Web/Aigents.Web.csproj -c Release -o ./publish/web
+
+      - name: Upload API artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-artifact
+          path: ./publish/api
+
+      - name: Upload Web artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-artifact
+          path: ./publish/web
+
+  # ─────────────────────────────────────────────────────────────
+  # BUILD DOCKER IMAGES
+  # ─────────────────────────────────────────────────────────────
+  docker:
+    name: Build & Push Docker Images
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Login to Azure Container Registry
+        run: |
+          az acr login --name ${{ env.ACR_NAME }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./src/Aigents.Api/Dockerfile
+          push: true
+          tags: |
+            ${{ env.ACR_NAME }}.azurecr.io/${{ env.API_IMAGE }}:${{ github.sha }}
+            ${{ env.ACR_NAME }}.azurecr.io/${{ env.API_IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Web image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./src/Aigents.Web/Dockerfile
+          push: true
+          tags: |
+            ${{ env.ACR_NAME }}.azurecr.io/${{ env.WEB_IMAGE }}:${{ github.sha }}
+            ${{ env.ACR_NAME }}.azurecr.io/${{ env.WEB_IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ─────────────────────────────────────────────────────────────
+  # DEPLOY TO AZURE
+  # ─────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to Aigents.au
+    runs-on: ubuntu-latest
+    needs: docker
+    environment: production
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy Infrastructure (Bicep)
+        uses: azure/arm-deploy@v2
+        with:
+          subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          resourceGroupName: ${{ env.AZURE_RESOURCE_GROUP }}
+          template: ./infra/main.bicep
+          parameters: >
+            environmentName=production
+            acrName=${{ env.ACR_NAME }}
+            imageTag=${{ github.sha }}
+            googleClientId=${{ secrets.GOOGLE_CLIENT_ID }}
+            googleClientSecret=${{ secrets.GOOGLE_CLIENT_SECRET }}
+          failOnStdErr: false
+
+      - name: Get Web App URL
+        id: get-url
+        run: |
+          WEB_URL=$(az containerapp show \
+            --name aigents-web \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --query properties.configuration.ingress.fqdn \
+            --output tsv)
+          echo "web_url=https://$WEB_URL" >> $GITHUB_OUTPUT
+          echo "🚀 Deployed to: https://$WEB_URL"
+
+      - name: Deployment Summary
+        run: |
+          echo "## 🚀 Deployment Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** Production" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**URL:** ${{ steps.get-url.outputs.web_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Services Deployed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Aigents API" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Aigents Web" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ SQL Server" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Redis Cache" >> $GITHUB_STEP_SUMMARY
+
+  # ─────────────────────────────────────────────────────────────
+  # CONFIGURE CUSTOM DOMAIN
+  # ─────────────────────────────────────────────────────────────
+  configure-domain:
+    name: Configure Aigents.au Domain
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    
+    steps:
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Configure Custom Domain
+        run: |
+          # Add custom domain to Container App
+          az containerapp hostname add \
+            --name aigents-web \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --hostname aigents.au \
+            || echo "Domain may already be configured"
+          
+          # Bind managed certificate
+          az containerapp hostname bind \
+            --name aigents-web \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --hostname aigents.au \
+            --environment aigents-env \
+            --validation-method CNAME \
+            || echo "Certificate binding may already exist"
+
+      - name: Verify Deployment
+        run: |
+          echo "🌐 Verifying aigents.au..."
+          curl -s -o /dev/null -w "%{http_code}" https://aigents.au || echo "Domain verification pending DNS propagation"

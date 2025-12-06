@@ -1,0 +1,21 @@
+@page "/"
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Web
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+
+<PageTitle>Aigents - AI Real Estate Agent</PageTitle>
+
+@* Show Hero for now - authentication can be enabled later *@
+<Hero OnGetStarted="HandleGetStarted" />
+
+@code {
+    private string _mode = "buy";
+
+    private void HandleGetStarted()
+    {
+        // For now, go directly to chat without auth
+        Navigation.NavigateTo("/chat", forceLoad: false);
+    }
+}

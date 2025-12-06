@@ -1,0 +1,67 @@
+# ═══════════════════════════════════════════════════════════════
+# AIGENTS - DOCKER COMPOSE (ARM64 Compatible)
+# ═══════════════════════════════════════════════════════════════
+# Works on: Apple Silicon (M1/M2/M3), Snapdragon (Windows ARM64)
+# Run: docker compose up -d
+# ═══════════════════════════════════════════════════════════════
+
+services:
+  # ─────────────────────────────────────────────────────────────
+  # SQL SERVER (using x86_64 emulation on Windows ARM64)
+  # ─────────────────────────────────────────────────────────────
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    container_name: aigents-sql
+    user: root
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Aigents@2024!"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Aigents@2024!" -C -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+  # ─────────────────────────────────────────────────────────────
+  # REDIS
+  # ─────────────────────────────────────────────────────────────
+  redis:
+    image: redis:alpine
+    platform: linux/arm64
+    container_name: aigents-redis
+    command: ["redis-server", "--ignore-warnings", "ARM64-COW-BUG"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─────────────────────────────────────────────────────────────
+  # MAILDEV (Local email testing)
+  # ─────────────────────────────────────────────────────────────
+  maildev:
+    image: maildev/maildev:latest
+    container_name: aigents-mail
+    ports:
+      - "1080:1080"  # Web UI
+      - "1025:1025"  # SMTP
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:1080"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  sqlserver-data:
+  redis-data:

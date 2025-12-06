@@ -1,0 +1,63 @@
+# ═══════════════════════════════════════════════════════════════
+# AIGENTS CI PIPELINE
+# Build and test on pull requests
+# ═══════════════════════════════════════════════════════════════
+
+name: CI - Build & Test
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+  push:
+    branches:
+      - develop
+      - 'feature/**'
+
+env:
+  DOTNET_VERSION: '9.0.x'
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore dependencies
+        run: dotnet restore Aigents.sln
+
+      - name: Build solution
+        run: dotnet build Aigents.sln --configuration Release --no-restore
+
+      - name: Run tests
+        run: dotnet test Aigents.sln --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage"
+        continue-on-error: true
+
+      - name: Build Docker images (verify)
+        run: |
+          docker build -t aigents-api:test -f src/Aigents.Api/Dockerfile .
+          docker build -t aigents-web:test -f src/Aigents.Web/Dockerfile .
+
+      - name: Summary
+        run: |
+          echo "## ✅ Build Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.head_ref || github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY

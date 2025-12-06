@@ -1,0 +1,65 @@
+# ═══════════════════════════════════════════════════════════════
+# AIGENTS - GITIGNORE
+# ═══════════════════════════════════════════════════════════════
+
+# Build outputs
+bin/
+obj/
+out/
+publish/
+
+# .NET
+*.user
+*.userosscache
+*.sln.docstates
+*.dll
+*.pdb
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.suo
+*.swp
+*.swo
+
+# User secrets
+secrets.json
+
+# Rider
+*.sln.iml
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# Azure
+.azure/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Test results
+TestResults/
+coverage/
+
+# NuGet
+*.nupkg
+.nuget/
+packages/
+
+# Local environment
+.env
+.env.local
+appsettings.Development.json
+appsettings.Local.json
+
+# EF Migrations (keep in source control)
+# !**/Migrations/
+
+# Aspire
+.aspire/

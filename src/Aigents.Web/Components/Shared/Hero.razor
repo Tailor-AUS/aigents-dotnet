@@ -1,0 +1,104 @@
+@* ═══════════════════════════════════════════════════════════════
+   HERO COMPONENT
+   Landing page with mode toggle and CTA
+═══════════════════════════════════════════════════════════════ *@
+
+<div class="orb orb-1 @(_mode == "buy" ? "orb-buy" : "orb-sell")"></div>
+<div class="orb orb-2 @(_mode == "buy" ? "orb-buy" : "orb-sell")"></div>
+
+<nav class="nav">
+    <div class="logo">
+        <div class="logo-icon">✦</div>
+        <span class="logo-text">aigents<span class="logo-au">.au</span></span>
+    </div>
+    <button class="btn-primary @(_mode)" @onclick="OnGetStarted">
+        Get Started →
+    </button>
+</nav>
+
+<div class="hero-content">
+    <div class="badge">
+        <span class="badge-dot @(_mode)"></span>
+        AI-Powered Real Estate
+    </div>
+    
+    <p class="tagline">Hire an AIGENT to</p>
+    
+    <div class="word-container">
+        <span class="hero-word @(_mode)">@_mode.ToUpper()</span>
+    </div>
+    
+    <div class="toggle-container">
+        <button class="@BuyToggleClass" 
+                @onclick="SetModeBuy">
+            BUY
+        </button>
+        <button class="@SellToggleClass" 
+                @onclick="SetModeSell">
+            SELL
+        </button>
+    </div>
+    
+    <button class="cta-card" @onclick="OnGetStarted">
+        <div class="cta-inner">
+            <div class="cta-content">
+                <span class="cta-label">Ready to explore</span>
+                <span class="cta-title">Chat with your AI agent</span>
+            </div>
+            <div class="cta-arrow @(_mode)">→</div>
+        </div>
+    </button>
+    
+    <div class="stats">
+        <div class="stat">
+            <span class="stat-num">130+</span>
+            <span class="stat-label">Suburbs</span>
+        </div>
+        <div class="stat">
+            <span class="stat-num">32</span>
+            <span class="stat-label">AI Tools</span>
+        </div>
+        <div class="stat">
+            <span class="stat-num">24/7</span>
+            <span class="stat-label">Available</span>
+        </div>
+    </div>
+</div>
+
+<div class="footer">Brisbane & Gold Coast</div>
+
+@code {
+    [Parameter]
+    public EventCallback OnGetStarted { get; set; }
+
+    private string _mode = "buy";
+    private System.Timers.Timer? _timer;
+
+    protected override void OnInitialized()
+    {
+        _timer = new System.Timers.Timer(3000);
+        _timer.Elapsed += (s, e) => InvokeAsync(() =>
+        {
+            _mode = _mode == "buy" ? "sell" : "buy";
+            StateHasChanged();
+        });
+        _timer.Start();
+    }
+
+    private void SetMode(string mode)
+    {
+        _mode = mode;
+        _timer?.Stop();
+    }
+
+    private void SetModeBuy() => SetMode("buy");
+    private void SetModeSell() => SetMode("sell");
+
+    private string BuyToggleClass => _mode == "buy" ? "toggle-btn active buy" : "toggle-btn";
+    private string SellToggleClass => _mode == "sell" ? "toggle-btn active sell" : "toggle-btn";
+
+    public void Dispose()
+    {
+        _timer?.Dispose();
+    }
+}
