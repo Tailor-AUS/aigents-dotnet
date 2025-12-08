@@ -10,6 +10,9 @@ param environmentName string
 @description('Azure region')
 param location string = resourceGroup().location
 
+@description('Azure AI region (supports GPT-4o)')
+param aiLocation string = 'eastus'
+
 @description('Azure Container Registry name')
 param acrName string
 
@@ -57,7 +60,7 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
 
 resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2023-10-01-preview' = {
   name: '${appName}-ai-${suffix}'
-  location: location
+  location: aiLocation
   tags: tags
   kind: 'OpenAI'
   sku: {
