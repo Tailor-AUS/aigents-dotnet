@@ -267,6 +267,7 @@ resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
                 path: '/alive'
                 port: 8080
               }
+              initialDelaySeconds: 60
               periodSeconds: 30
             }
             {
@@ -275,7 +276,8 @@ resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
                 path: '/ready'
                 port: 8080
               }
-              periodSeconds: 10
+              initialDelaySeconds: 60
+              periodSeconds: 30
             }
           ]
         }
@@ -376,6 +378,7 @@ resource webApp 'Microsoft.App/containerApps@2023-05-01' = {
                 path: '/alive'
                 port: 8080
               }
+              initialDelaySeconds: 60
               periodSeconds: 30
             }
             {
@@ -384,7 +387,8 @@ resource webApp 'Microsoft.App/containerApps@2023-05-01' = {
                 path: '/ready'
                 port: 8080
               }
-              periodSeconds: 10
+              initialDelaySeconds: 60
+              periodSeconds: 30
             }
           ]
         }
