@@ -4,6 +4,8 @@
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,
+      "hotReloadEnabled": true,
+      "hotReloadProfile": "aspnetcore",
       "applicationUrl": "https://localhost:17225;http://localhost:15225",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",

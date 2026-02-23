@@ -1,13 +1,16 @@
-// ═══════════════════════════════════════════════════════════════
-// AIGENTS API - VERTICAL SLICE ARCHITECTURE
-// ═══════════════════════════════════════════════════════════════
-// Each feature is self-contained with its own endpoint, handler,
-// and validation. Uses MediatR for CQRS and Carter for endpoints.
-// ═══════════════════════════════════════════════════════════════
-
 using Aigents.Api.Common;
+using Aigents.Api.Features.Crm;
+using Aigents.Api.Features.Calls;
+using Aigents.Api.Features.Contacts;
+using Aigents.Api.Features.Inspections;
+using Aigents.Api.Features.VoiceNotes;
+using Aigents.Api.Features.Property;
+using Aigents.Api.Features.Buyer;
+using Aigents.Api.Features.Seller;
 using Aigents.Infrastructure.Data;
 using Aigents.Infrastructure.Services.AI;
+using Aigents.Infrastructure.CrmIntegration;
+using Aigents.Infrastructure.PropertyData;
 using Carter;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -33,12 +36,25 @@ builder.AddSqlServerDbContext<AigentsDbContext>("aigentsdb");
 builder.AddRedisDistributedCache("redis");
 
 // ───────────────────────────────────────────────────────────────
-// AI SERVICE (Azure AI Foundry)
+// AI SERVICES
 // ───────────────────────────────────────────────────────────────
 
 builder.Services.Configure<AzureAiOptions>(
     builder.Configuration.GetSection(AzureAiOptions.SectionName));
 builder.Services.AddScoped<IAiService, AzureAiService>();
+builder.Services.AddScoped<ICallIntelligenceService, CallIntelligenceService>();
+
+// ───────────────────────────────────────────────────────────────
+// CRM INTEGRATION
+// ───────────────────────────────────────────────────────────────
+
+builder.Services.AddCrmIntegration();
+
+// ───────────────────────────────────────────────────────────────
+// BUYER DATA INTEGRATION
+// ───────────────────────────────────────────────────────────────
+
+builder.Services.AddPropertyDataServices();
 
 // ───────────────────────────────────────────────────────────────
 // MEDIATR + VALIDATION
@@ -109,7 +125,27 @@ app.UseAuthorization();
 // ───────────────────────────────────────────────────────────────
 
 app.MapDefaultEndpoints(); // Health checks
-app.MapCarter(); // Feature endpoints
+app.MapCarter(); // Feature endpoints (Carter modules)
+
+// Agent Mobile API Endpoints
+app.MapCrmEndpoints();
+app.MapCallEndpoints();
+app.MapContactEndpoints();
+app.MapInspectionEndpoints();
+app.MapVoiceNoteEndpoints();
+
+// Buyer API Endpoints
+app.MapPropertyEndpoints();
+app.MapBuyerEndpoints();
+
+// Seller API Endpoints
+app.MapSellerEndpoints();
+
+// QLD Property Maps & Reports API
+app.MapMapsOnlineEndpoints();
+
+// Map Proxy (CORS bypass for QLD WMS)
+app.MapMapProxyEndpoints();
 
 // ───────────────────────────────────────────────────────────────
 // DATABASE INITIALIZATION (with retry for container startup)

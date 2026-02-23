@@ -1,0 +1,112 @@
+﻿id: /subscriptions/e2124f20-1dab-432d-8d68-61e117d690dd/resourceGroups/aigents-rg/providers/Microsoft.App/containerapps/aigents-api-production
+identity:
+  principalId: e03f334d-8e20-428e-9be2-672762c9e851
+  tenantId: ab273f32-20d3-4f0d-bc62-d8dff2cdce0b
+  type: SystemAssigned
+location: Australia East
+name: aigents-api-production
+properties:
+  configuration:
+    activeRevisionsMode: Single
+    dapr: null
+    identitySettings: []
+    ingress:
+      additionalPortMappings: null
+      allowInsecure: false
+      clientCertificateMode: null
+      corsPolicy:
+        allowCredentials: false
+        allowedHeaders:
+        - '*'
+        allowedMethods:
+        - '*'
+        allowedOrigins:
+        - '*'
+        exposeHeaders: null
+        maxAge: null
+      customDomains: null
+      exposedPort: 0
+      external: true
+      fqdn: aigents-api-production.bluetree-f1d87971.australiaeast.azurecontainerapps.io
+      ipSecurityRestrictions: null
+      stickySessions: null
+      targetPort: 8080
+      traffic:
+      - latestRevision: true
+        weight: 100
+      transport: Http
+    maxInactiveRevisions: 100
+    registries:
+    - identity: system
+      passwordSecretRef: ''
+      server: aigentsacr.azurecr.io
+      username: ''
+    runtime: null
+    service: null
+  customDomainVerificationId: AC38EE1C9BEEAEDE43EFEB4B0D435AFD6412B185E5596CBBF51A315A04603221
+  delegatedIdentities: []
+  environmentId: /subscriptions/e2124f20-1dab-432d-8d68-61e117d690dd/resourceGroups/aigents-rg/providers/Microsoft.App/managedEnvironments/aigents-env-production
+  eventStreamEndpoint: https://australiaeast.azurecontainerapps.dev/subscriptions/e2124f20-1dab-432d-8d68-61e117d690dd/resourceGroups/aigents-rg/containerApps/aigents-api-production/eventstream
+  latestReadyRevisionName: ''
+  latestRevisionFqdn: ''
+  latestRevisionName: ''
+  managedEnvironmentId: /subscriptions/e2124f20-1dab-432d-8d68-61e117d690dd/resourceGroups/aigents-rg/providers/Microsoft.App/managedEnvironments/aigents-env-production
+  outboundIpAddresses:
+  - 20.11.120.135
+  provisioningState: Failed
+  runningStatus: Running
+  template:
+    containers:
+    - env:
+      - name: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - name: AzureAI__Endpoint
+        secretRef: azure-ai-endpoint
+      - name: AzureAI__ApiKey
+        secretRef: azure-ai-key
+      - name: AzureAI__DeploymentName
+        value: gpt-4o
+      - name: Google__ClientId
+        secretRef: google-client-id
+      - name: Google__ClientSecret
+        secretRef: google-client-secret
+      - name: ConnectionStrings__aigentsdb
+        secretRef: sql-connection-string
+      - name: ConnectionStrings__redis
+        secretRef: redis-connection-string
+      image: aigentsacr.azurecr.io/aigents-api:16d0968dec7be5bd575732c0a409dce4975430e4
+      name: api
+      command: ["/bin/sh"]
+      args: ["-c", "sleep 3600"]
+      resources:
+        cpu: 0.5
+        ephemeralStorage: 2Gi
+        memory: 1Gi
+    initContainers: null
+    revisionSuffix: ''
+    scale:
+      cooldownPeriod: 300
+      maxReplicas: 5
+      minReplicas: 1
+      pollingInterval: 30
+      rules:
+      - http:
+          metadata:
+            concurrentRequests: '100'
+        name: http-scaling
+    serviceBinds: null
+    terminationGracePeriodSeconds: null
+    volumes: null
+  workloadProfileName: null
+resourceGroup: aigents-rg
+systemData:
+  createdAt: '2025-12-08T03:47:49.6239757'
+  createdBy: 0dc6eb7e-b7ec-4b93-bd24-fd6dd9adc870
+  createdByType: Application
+  lastModifiedAt: '2025-12-08T23:24:21.2481147'
+  lastModifiedBy: partner@aigents.au
+  lastModifiedByType: User
+tags:
+  application: aigents
+  environment: production
+type: Microsoft.App/containerApps

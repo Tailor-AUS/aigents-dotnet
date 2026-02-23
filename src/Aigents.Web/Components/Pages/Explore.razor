@@ -1,0 +1,1950 @@
+@page "/explore"
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@using Aigents.Web.Components.Shared
+@using Aigents.Web.Services
+@using Microsoft.AspNetCore.Components.Web
+@using System.Net.Http.Json
+@implements IDisposable
+
+@inject IHttpClientFactory HttpClientFactory
+@inject ISiteContext SiteContext
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<PageTitle>Explore @Location - Aigents</PageTitle>
+
+<div class="explore-container @_personaClass">
+    @* Animated Background Mesh *@
+    <div class="mesh-gradient"></div>
+    
+    @* Glow Orbs *@
+    <div class="glow-orb glow-1"></div>
+    <div class="glow-orb glow-2"></div>
+
+    <header class="explore-header glass-header">
+        <div class="logo-group">
+            <a href="/" class="logo-link">
+                <span class="logo-icon">✦</span>
+                <span class="logo-text">aigents<span class="logo-tld">.au</span></span>
+            </a>
+        </div>
+        
+        <div class="search-bar glass-search">
+            <div class="mode-badge">@_modeDisplay</div>
+            <div class="search-input-wrapper">
+                <span class="search-icon">📍</span>
+                <input type="text" 
+                       @bind="_searchQuery" 
+                       @bind:event="oninput"
+                       @onkeypress="HandleSearchKeyPress"
+                       placeholder="Search suburb or address..." />
+            </div>
+            <button class="search-btn" @onclick="ExecuteSearch">
+                <span>🔍</span>
+            </button>
+        </div>
+
+        <div class="header-actions">
+            <button class="filter-toggle @(_showFilters ? "active" : "")" @onclick="ToggleFilters">
+                <span>⚙️</span> Filters
+            </button>
+            <button class="action-btn primary" @onclick="StartChat">
+                @(Mode?.ToLower().Contains("sell") == true ? "Get Valuation" : "Chat with Agent")
+            </button>
+            <div class="user-avatar">
+                @(User?.Identity?.Name?[0] ?? 'G')
+            </div>
+        </div>
+    </header>
+
+    <div class="explore-content">
+        @* Left Panel - Property Intelligence *@
+        <div class="intelligence-panel glass-panel">
+            <div class="panel-header">
+                <h2>📍 @Location</h2>
+                <span class="badge">QLD Cadastre</span>
+            </div>
+            
+            @* Data View Tabs *@
+            <div class="view-tabs">
+                <button class="view-tab @(_viewMode == "sold" ? "active" : "")" @onclick='() => _viewMode = "sold"'>
+                    🏷️ Recently Sold
+                </button>
+                <button class="view-tab @(_viewMode == "market" ? "active" : "")" @onclick='() => _viewMode = "market"'>
+                    🏠 On Market
+                </button>
+                <button class="view-tab @(_viewMode == "lots" ? "active" : "")" @onclick='() => _viewMode = "lots"'>
+                    📐 All Lots
+                </button>
+            </div>
+            
+            @* Time Filter for Sold Properties *@
+            @if (_viewMode == "sold")
+            {
+                <div class="filter-section">
+                    <label>Sale Period</label>
+                    <div class="time-pills">
+                        <button class="time-pill @(_soldPeriod == "0-6" ? "active" : "")" @onclick='() => _soldPeriod = "0-6"'>0-6 months</button>
+                        <button class="time-pill @(_soldPeriod == "6-12" ? "active" : "")" @onclick='() => _soldPeriod = "6-12"'>6-12 months</button>
+                        <button class="time-pill @(_soldPeriod == "1-3" ? "active" : "")" @onclick='() => _soldPeriod = "1-3"'>1-3 years</button>
+                        <button class="time-pill @(_soldPeriod == "3+" ? "active" : "")" @onclick='() => _soldPeriod = "3+"'>3+ years</button>
+                    </div>
+                </div>
+                
+                <div class="info-card">
+                    <div class="info-icon">📊</div>
+                    <div class="info-content">
+                        <h4>Sales Data Coming Soon</h4>
+                        <p>We're integrating QLD Government sales data. In the meantime, click any lot on the map to view property details.</p>
+                    </div>
+                </div>
+            }
+            
+            @* Analysis Mode Toggle *@
+            <div class="filter-section">
+                <label>Analysis Mode</label>
+                <div class="toggle-group">
+                    <button class="toggle-btn @(_analysisMode == "owner" ? "active" : "")" @onclick='() => _analysisMode = "owner"'>
+                        <span>🏡</span> Owner Occupier
+                    </button>
+                    <button class="toggle-btn @(_analysisMode == "investor" ? "active" : "")" @onclick='() => _analysisMode = "investor"'>
+                        <span>💰</span> Investor
+                    </button>
+                </div>
+            </div>
+            
+            @if (_analysisMode == "investor")
+            {
+                <div class="filter-section">
+                    <label>Investment Strategy</label>
+                    <div class="strategy-options">
+                        <label class="radio-card @(_investStrategy == "hold" ? "selected" : "")">
+                            <input type="radio" name="strategy" value="hold" @onchange='() => _investStrategy = "hold"' checked="@(_investStrategy == "hold")" />
+                            <div class="radio-content">
+                                <span class="icon">🏘️</span>
+                                <span class="label">Buy & Hold</span>
+                                <span class="desc">Rent as-is</span>
+                            </div>
+                        </label>
+                        <label class="radio-card @(_investStrategy == "reno" ? "selected" : "")">
+                            <input type="radio" name="strategy" value="reno" @onchange='() => _investStrategy = "reno"' />
+                            <div class="radio-content">
+                                <span class="icon">🔨</span>
+                                <span class="label">Renovate</span>
+                                <span class="desc">Add value</span>
+                            </div>
+                        </label>
+                        <label class="radio-card @(_investStrategy == "develop" ? "selected" : "")">
+                            <input type="radio" name="strategy" value="develop" @onchange='() => _investStrategy = "develop"' />
+                            <div class="radio-content">
+                                <span class="icon">🏗️</span>
+                                <span class="label">Develop</span>
+                                <span class="desc">Knockdown rebuild</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            }
+            
+            @* Selected Property Info *@
+            @if (_selectedLot != null)
+            {
+                <div class="selected-property glass-card">
+                    <div class="property-header">
+                        <h3>@_selectedLot.LotPlan</h3>
+                        <button class="close-btn" @onclick="() => _selectedLot = null">×</button>
+                    </div>
+                    <div class="property-details">
+                        <div class="detail-row">
+                            <span class="label">Locality</span>
+                            <span class="value">@(_selectedLot.Locality ?? "N/A")</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Area</span>
+                            <span class="value">@(_selectedLot.Area ?? "N/A")</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">LGA</span>
+                            <span class="value">@(_selectedLot.LGA ?? "N/A")</span>
+                        </div>
+                    </div>
+                    <div class="property-actions">
+                        <button class="btn-primary" @onclick="RequestPropertyReport">
+                            📋 Get Full Report
+                        </button>
+                        <button class="btn-secondary" @onclick="AnalyzeProperty">
+                            🤖 AI Analysis
+                        </button>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="empty-selection">
+                    <div class="tap-icon">👆</div>
+                    <h4>Click any lot on the map</h4>
+                    <p>Select a property to view details, request reports, or get an AI-powered valuation analysis.</p>
+                </div>
+            }
+            
+            @* Data Sources *@
+            <div class="data-sources">
+                <h4>Data Sources</h4>
+                <div class="source-list">
+                    <div class="source-item connected">
+                        <span class="status">✓</span>
+                        <span class="name">QLD Cadastre (DCDB)</span>
+                    </div>
+                    <div class="source-item connected">
+                        <span class="status">✓</span>
+                        <span class="name">QLD MapsOnline</span>
+                    </div>
+                    <div class="source-item pending">
+                        <span class="status">⏳</span>
+                        <span class="name">Domain API</span>
+                    </div>
+                    <div class="source-item pending">
+                        <span class="status">⏳</span>
+                        <span class="name">Sales History</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* Map Panel - Leaflet with QLD Cadastre *@
+        <div class="map-panel">
+            <div id="leaflet-map" class="leaflet-map-container"></div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public string? Mode { get; set; } = "buy";
+
+    [SupplyParameterFromQuery]
+    public string? Location { get; set; } = "Brisbane";
+
+    [SupplyParameterFromQuery]
+    public string? Timeframe { get; set; } = "3mo";
+
+    [SupplyParameterFromQuery]
+    public string? Type { get; set; } = "residential";
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthState { get; set; }
+    private System.Security.Claims.ClaimsPrincipal? User;
+
+    // State
+    private List<PropertyDto> _properties = new();
+    private PropertyDto? _selectedProperty;
+    private HashSet<string> _favorites = new();
+    private bool _isLoading = true;
+    private string? _error;
+    private int _page = 1;
+    private int _totalCount = 0;
+    
+    // New UI State
+    private string _viewMode = "lots"; // "sold", "market", "lots"
+    private string _soldPeriod = "0-6"; // "0-6", "6-12", "1-3", "3+"
+    private string _analysisMode = "owner"; // "owner", "investor"
+    private string _investStrategy = "hold"; // "hold", "reno", "develop"
+    private SelectedLotInfo? _selectedLot;
+    
+    // Filters
+    private bool _showFilters = false;
+    private string _searchQuery = "";
+    private string _filterType = "";
+    private int? _filterBeds;
+    private decimal? _filterMinPrice;
+    private decimal? _filterMaxPrice;
+    private bool _includeOffMarket = false;
+    private string _sortBy = "newest";
+    
+    // Persona
+    private SitePersona _persona = SitePersona.Buy;
+    private string _personaClass => $"persona-{_persona.ToString().ToLower()}";
+    private string _modeDisplay => _persona switch
+    {
+        SitePersona.Buy => "🏠 BUY",
+        SitePersona.Sell => "📈 SELL",
+        SitePersona.Rent => "🔑 RENT",
+        _ => "🎯 AGENT"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthState != null)
+        {
+            var auth = await AuthState;
+            User = auth.User;
+        }
+        
+        // Detect persona from mode or URL
+        _persona = Mode?.ToLower() switch
+        {
+            "buy" => SitePersona.Buy,
+            "sell" => SitePersona.Sell,
+            "rent" => SitePersona.Rent,
+            "agent" => SitePersona.Agent,
+            _ => SitePersona.Buy
+        };
+        
+        _searchQuery = Location ?? "Brisbane";
+        await LoadProperties();
+    }
+    
+    private bool _mapInitialized = false;
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender || (!_mapInitialized && _properties.Count > 0))
+        {
+            await InitializeMap();
+        }
+    }
+    
+    private DotNetObjectReference<Explore>? _dotNetRef;
+    
+    private async Task InitializeMap()
+    {
+        try
+        {
+            // Default center on Brisbane/Moorooka area
+            double centerLat = -27.5241;
+            double centerLng = 153.0180;
+            
+            // Create reference for JS callback
+            _dotNetRef = DotNetObjectReference.Create(this);
+            
+            // Initialize Leaflet map with QLD Cadastre layer
+            // Zoom 17 shows property boundaries clearly
+            await JS.InvokeVoidAsync("leafletMap.init", "leaflet-map", centerLat, centerLng, 17, _dotNetRef);
+            
+            // Clear any existing markers
+            await JS.InvokeVoidAsync("leafletMap.clearMarkers");
+            
+            // Note: Property boundaries come from QLD Government WMS layer (real data!)
+            // No mock markers needed - the map shows actual lot boundaries
+            
+            _mapInitialized = true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Map initialization error: {ex.Message}");
+        }
+    }
+    
+    [JSInvokable]
+    public void OnMarkerClicked(string propertyId)
+    {
+        var property = _properties.FirstOrDefault(p => p.Id == propertyId);
+        if (property != null)
+        {
+            _selectedProperty = property;
+            StateHasChanged();
+        }
+    }
+    
+    public void Dispose()
+    {
+        _dotNetRef?.Dispose();
+        try
+        {
+            JS.InvokeVoidAsync("leafletMap.dispose");
+        }
+        catch { }
+    }
+    
+    // Class for selected lot information from cadastre
+    public class SelectedLotInfo
+    {
+        public string LotPlan { get; set; } = "";
+        public string? Locality { get; set; }
+        public string? Area { get; set; }
+        public string? LGA { get; set; }
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
+    }
+    
+    [JSInvokable]
+    public void OnLotSelected(string lotPlan, string? locality, string? area, string? lga, double lat, double lng)
+    {
+        _selectedLot = new SelectedLotInfo
+        {
+            LotPlan = lotPlan,
+            Locality = locality,
+            Area = area,
+            LGA = lga,
+            Latitude = lat,
+            Longitude = lng
+        };
+        StateHasChanged();
+    }
+    
+    private async Task RequestPropertyReport()
+    {
+        if (_selectedLot == null) return;
+        
+        var email = await JS.InvokeAsync<string>("prompt", "Enter your email address to receive the property report:");
+        if (!string.IsNullOrEmpty(email) && email.Contains("@"))
+        {
+            try
+            {
+                var client = HttpClientFactory.CreateClient("api");
+                var response = await client.PostAsJsonAsync("/api/maps/report/lot-plan", new
+                {
+                    lotPlan = _selectedLot.LotPlan,
+                    emailAddress = email,
+                    reportType = "ALLVEG"
+                });
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    await JS.InvokeVoidAsync("alert", $"✅ Report requested! A comprehensive property report for {_selectedLot.LotPlan} will be emailed to {email} within a few minutes.");
+                }
+                else
+                {
+                    await JS.InvokeVoidAsync("alert", "❌ Error requesting report. Please try again.");
+                }
+            }
+            catch
+            {
+                await JS.InvokeVoidAsync("alert", "Error requesting report. Please check your connection.");
+            }
+        }
+    }
+    
+    private async Task AnalyzeProperty()
+    {
+        if (_selectedLot == null) return;
+        
+        // Navigate to chat with context about this property
+        Nav.NavigateTo($"/chat?context=property&lot={_selectedLot.LotPlan}&mode={_analysisMode}&strategy={_investStrategy}");
+    }
+
+
+    private async Task LoadProperties()
+    {
+        _isLoading = true;
+        _error = null;
+        StateHasChanged();
+
+        try
+        {
+            var client = HttpClientFactory.CreateClient("api");
+            var queryParams = new List<string>
+            {
+                $"suburb={Uri.EscapeDataString(_searchQuery)}",
+                $"page={_page}",
+                $"includeOffMarket={_includeOffMarket}"
+            };
+            
+            if (!string.IsNullOrEmpty(_filterType))
+                queryParams.Add($"propertyType={_filterType}");
+            if (_filterBeds.HasValue)
+                queryParams.Add($"minBedrooms={_filterBeds}");
+            if (_filterMinPrice.HasValue)
+                queryParams.Add($"minPrice={_filterMinPrice}");
+            if (_filterMaxPrice.HasValue)
+                queryParams.Add($"maxPrice={_filterMaxPrice}");
+                
+            var url = $"/api/properties/search?{string.Join("&", queryParams)}";
+            var response = await client.GetFromJsonAsync<SearchResultsDto>(url);
+            
+            if (response != null)
+            {
+                if (_page == 1)
+                    _properties = response.Items;
+                else
+                    _properties.AddRange(response.Items);
+                    
+                _totalCount = response.TotalCount;
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = $"Unable to load properties. {ex.Message}";
+            // Fallback to mock data for now
+            await LoadMockProperties();
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private Task LoadMockProperties()
+    {
+        var r = new Random();
+        var mockProperties = new List<PropertyDto>();
+        
+        for (int i = 0; i < 12; i++)
+        {
+            var price = r.Next(500, 2500) * 1000m;
+            mockProperties.Add(new PropertyDto
+            {
+                Id = Guid.NewGuid().ToString(),
+                Address = $"{r.Next(1, 99)} {GetStreetName(r)}, {_searchQuery}",
+                Suburb = _searchQuery,
+                Bedrooms = r.Next(2, 6),
+                Bathrooms = r.Next(1, 4),
+                CarSpaces = r.Next(1, 3),
+                LandAreaSqm = r.Next(300, 900),
+                PriceLow = price,
+                PriceHigh = price + r.Next(20, 100) * 1000m,
+                EstimatedValue = price * (0.9m + (decimal)r.NextDouble() * 0.2m),
+                Status = (ListingStatus)r.Next(0, 4),
+                Headline = GetInsight(r),
+                Latitude = r.NextDouble() * 60 + 20,
+                Longitude = r.NextDouble() * 60 + 20
+            });
+        }
+        
+        _properties = mockProperties;
+        _totalCount = mockProperties.Count;
+        return Task.CompletedTask;
+    }
+    
+    private string GetStreetName(Random r) => new[] { "Park Ave", "River Rd", "Smith St", "High St", "Garden St", "View Tce" }[r.Next(0, 6)];
+    private string GetInsight(Random r) => new[] { 
+        "Rare opportunity - first time on market in 20 years",
+        "Prices in this street up 12% YoY", 
+        "Great entry level opportunity",
+        "Walking distance to top schools",
+        "Recently renovated throughout",
+        "Priced below comparable sales"
+    }[r.Next(0, 6)];
+
+    private async Task LoadMore()
+    {
+        _page++;
+        await LoadProperties();
+    }
+
+    private void SelectProperty(PropertyDto property)
+    {
+        _selectedProperty = property;
+    }
+
+    private void ToggleFavorite(PropertyDto property)
+    {
+        if (_favorites.Contains(property.Id))
+            _favorites.Remove(property.Id);
+        else
+            _favorites.Add(property.Id);
+    }
+
+    private void ToggleFilters() => _showFilters = !_showFilters;
+    
+    private async Task ApplyFilters()
+    {
+        _page = 1;
+        _showFilters = false;
+        await LoadProperties();
+    }
+    
+    private async Task ClearFilters()
+    {
+        _filterType = "";
+        _filterBeds = null;
+        _filterMinPrice = null;
+        _filterMaxPrice = null;
+        _includeOffMarket = false;
+        _page = 1;
+        await LoadProperties();
+    }
+    
+    private async Task HandleSearchKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            await ExecuteSearch();
+    }
+    
+    private async Task ExecuteSearch()
+    {
+        _page = 1;
+        await LoadProperties();
+    }
+
+    private void StartChat()
+    {
+        Nav.NavigateTo($"/chat?mode={Mode}&address={Uri.EscapeDataString(_selectedProperty?.Address ?? Location ?? "")}");
+    }
+    
+    private void ChatAboutProperty()
+    {
+        if (_selectedProperty != null)
+            Nav.NavigateTo($"/chat?mode={Mode}&address={Uri.EscapeDataString(_selectedProperty.Address)}");
+    }
+
+    // Formatting helpers
+    private string FormatPrice(decimal? low, decimal? high)
+    {
+        if (!low.HasValue) return "Contact Agent";
+        if (!high.HasValue || low == high) return FormatCurrency(low.Value);
+        return $"{FormatCurrency(low.Value)} - {FormatCurrency(high.Value)}";
+    }
+    
+    private string FormatCurrency(decimal value)
+    {
+        if (value >= 1_000_000)
+            return $"${value / 1_000_000:F2}M";
+        return $"${value:N0}";
+    }
+    
+    private string FormatPriceShort(decimal? price)
+    {
+        if (!price.HasValue) return "POA";
+        if (price >= 1_000_000)
+            return $"${price.Value / 1_000_000:F1}m";
+        return $"${price.Value / 1000:F0}k";
+    }
+    
+    private string TruncateText(string text, int maxLength)
+    {
+        if (string.IsNullOrEmpty(text) || text.Length <= maxLength)
+            return text;
+        return text.Substring(0, maxLength) + "...";
+    }
+    
+    private string GetStatusClass(ListingStatus status) => status switch
+    {
+        ListingStatus.ForSale => "for-sale",
+        ListingStatus.UnderOffer => "under-offer",
+        ListingStatus.Sold => "sold",
+        ListingStatus.ForRent => "for-rent",
+        _ => ""
+    };
+    
+    private string GetStatusDisplay(ListingStatus status) => status switch
+    {
+        ListingStatus.ForSale => "For Sale",
+        ListingStatus.UnderOffer => "Under Offer",
+        ListingStatus.Sold => "Sold",
+        ListingStatus.ForRent => "For Rent",
+        ListingStatus.Leased => "Leased",
+        _ => "Off Market"
+    };
+
+    // DTOs matching API response
+    private class SearchResultsDto
+    {
+        public List<PropertyDto> Items { get; set; } = new();
+        public int TotalCount { get; set; }
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+    }
+    
+    private class PropertyDto
+    {
+        public string Id { get; set; } = "";
+        public string Address { get; set; } = "";
+        public string? Suburb { get; set; }
+        public int Bedrooms { get; set; }
+        public int Bathrooms { get; set; }
+        public int CarSpaces { get; set; }
+        public double? LandAreaSqm { get; set; }
+        public string? PriceDisplay { get; set; }
+        public decimal? PriceLow { get; set; }
+        public decimal? PriceHigh { get; set; }
+        public decimal? EstimatedValue { get; set; }
+        public ListingStatus Status { get; set; }
+        public string? Headline { get; set; }
+        public string? MainImageUrl { get; set; }
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
+    }
+    
+    private enum ListingStatus
+    {
+        OffMarket,
+        ForSale,
+        UnderOffer,
+        Sold,
+        ForRent,
+        Leased,
+        Withdrawn
+    }
+}
+
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   EXPLORE PAGE - INLINE STYLES (Light Theme)
+   Persona-aware theming with glassmorphism
+═══════════════════════════════════════════════════════════════ */
+
+.explore-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    font-family: 'Inter', 'Outfit', -apple-system, sans-serif;
+    background: #ffffff;
+    
+    --bg-base: #ffffff;
+    --accent: #6366f1;
+    --accent-glow: rgba(99, 102, 241, 0.15);
+    --gradient-1: #7c3aed;
+    --gradient-2: #4f46e5;
+    --text-primary: #1a1a2e;
+    --text-secondary: #4b5563;
+    --glass-bg: rgba(255, 255, 255, 0.85);
+    --glass-border: rgba(0, 0, 0, 0.08);
+    --card-bg: rgba(255, 255, 255, 0.9);
+}
+
+/* Persona Themes - Pure white backgrounds */
+.explore-container.persona-buy {
+    --accent: #22d3ee;
+    --accent-glow: rgba(34, 211, 238, 0.06);
+    --gradient-1: #06b6d4;
+    --gradient-2: #3b82f6;
+    --bg-base: #ffffff;
+    background: #ffffff;
+}
+
+.explore-container.persona-sell {
+    --accent: #10b981;
+    --accent-glow: rgba(16, 185, 129, 0.06);
+    --gradient-1: #059669;
+    --gradient-2: #fbbf24;
+    --bg-base: #ffffff;
+    background: #ffffff;
+}
+
+.explore-container.persona-rent {
+    --accent: #ec4899;
+    --accent-glow: rgba(236, 72, 153, 0.06);
+    --gradient-1: #db2777;
+    --gradient-2: #f43f5e;
+    --bg-base: #ffffff;
+    background: #ffffff;
+}
+
+.explore-container.persona-agent {
+    --accent: #8b5cf6;
+    --accent-glow: rgba(139, 92, 246, 0.06);
+    --gradient-1: #7c3aed;
+    --gradient-2: #6366f1;
+    --bg-base: #ffffff;
+    background: #ffffff;
+}
+
+/* Animated Mesh Background - Very subtle for light theme */
+.mesh-gradient {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(ellipse 80% 50% at 20% 20%, var(--accent-glow), transparent 40%),
+        radial-gradient(ellipse 60% 40% at 80% 80%, var(--accent-glow), transparent 40%),
+        var(--bg-base);
+    opacity: 0.3;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Glow Orbs - Very subtle for light theme */
+.glow-orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.05;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.glow-1 {
+    width: 500px;
+    height: 500px;
+    background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2));
+    top: -150px;
+    left: -150px;
+}
+
+.glow-2 {
+    width: 400px;
+    height: 400px;
+    background: linear-gradient(135deg, var(--gradient-2), var(--accent));
+    bottom: -100px;
+    right: -100px;
+}
+
+/* Glass Header - Light version */
+.glass-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 32px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.logo-group {
+    display: flex;
+    align-items: center;
+}
+
+.logo-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: var(--text-primary);
+    font-weight: 800;
+    font-size: 20px;
+}
+
+.logo-icon {
+    color: var(--accent);
+}
+
+.logo-tld {
+    color: var(--accent);
+}
+
+/* Search Bar - Light theme */
+.glass-search {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 100px;
+    padding: 8px 8px 8px 16px;
+    max-width: 500px;
+    flex: 1;
+    margin: 0 32px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.mode-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 6px 12px;
+    background: linear-gradient(135deg, var(--accent), var(--gradient-2));
+    color: white;
+    border-radius: 100px;
+    white-space: nowrap;
+}
+
+.search-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+}
+
+.search-input-wrapper input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #1a1a2e;
+    font-size: 14px;
+}
+
+.search-input-wrapper input::placeholder {
+    color: #9ca3af;
+}
+
+.search-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Header Actions - Light theme */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.filter-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 100px;
+    color: #4b5563;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.filter-toggle:hover,
+.filter-toggle.active {
+    background: linear-gradient(135deg, var(--accent), var(--gradient-2));
+    color: white;
+    border-color: transparent;
+}
+
+.action-btn.primary {
+    padding: 10px 20px;
+    background: var(--accent);
+    border: none;
+    border-radius: 100px;
+    color: var(--bg-base);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+}
+
+/* Main Content */
+.explore-content {
+    display: flex;
+    flex: 1;
+    position: relative;
+    z-index: 1;
+}
+
+/* Filter Panel - Light theme */
+.filter-panel {
+    position: fixed;
+    left: -320px;
+    top: 0;
+    bottom: 0;
+    width: 300px;
+    padding: 80px 24px 24px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(0, 0, 0, 0.08);
+    z-index: 99;
+    transition: left 0.3s ease;
+    overflow-y: auto;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.06);
+}
+
+.filter-panel.open {
+    left: 0;
+}
+
+.filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.filter-header h3 {
+    color: #1a1a2e;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.close-filters {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.06);
+    border: none;
+    color: #4b5563;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.filter-group {
+    margin-bottom: 24px;
+}
+
+.filter-group label {
+    display: block;
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+.filter-group select,
+.filter-group input[type="number"] {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    color: #1a1a2e;
+    font-size: 14px;
+    outline: none;
+}
+
+.quick-select {
+    display: flex;
+    gap: 8px;
+}
+
+.quick-select button {
+    flex: 1;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    color: #4b5563;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.quick-select button:hover,
+.quick-select button.active {
+    background: linear-gradient(135deg, var(--accent), var(--gradient-2));
+    color: white;
+}
+
+.price-inputs {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.price-inputs input {
+    flex: 1;
+}
+
+.price-inputs span {
+    color: #9ca3af;
+}
+
+.checkbox-label {
+    display: flex !important;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    color: #1a1a2e !important;
+}
+
+.checkbox-label input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent);
+}
+
+.filter-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 32px;
+}
+
+.btn-secondary,
+.btn-primary {
+    flex: 1;
+    padding: 12px 20px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.btn-secondary {
+    background: transparent;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    color: #4b5563;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--gradient-2));
+    border: none;
+    color: white;
+}
+
+/* Listings Panel */
+.listings-panel {
+    flex: 1;
+    max-width: 900px;
+    padding: 24px 32px;
+    overflow-y: auto;
+    height: calc(100vh - 80px);
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.results-info h2 {
+    color: #1a1a2e;
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.loading-indicator {
+    color: var(--accent);
+    font-size: 13px;
+}
+
+.sort-controls select {
+    padding: 10px 16px;
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 100px;
+    color: #1a1a2e;
+    font-size: 13px;
+    outline: none;
+}
+
+/* Property Cards Grid */
+.listings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+}
+
+.property-card {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 20px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.property-card:hover {
+    transform: translateY(-8px);
+    border-color: var(--accent);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 0 0 30px var(--accent-glow);
+}
+
+.property-card.selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent);
+}
+
+.card-image {
+    height: 200px;
+    background: linear-gradient(135deg, rgba(0,0,0,0.04), rgba(0,0,0,0.02));
+    position: relative;
+    overflow: hidden;
+}
+
+.card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.status-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: white;
+}
+
+.status-badge.for-sale { background: var(--accent); color: var(--bg-base); }
+.status-badge.under-offer { background: #f59e0b; color: #000; }
+.status-badge.sold { background: #ef4444; }
+
+.favorite-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.card-content {
+    padding: 20px;
+}
+
+.price-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.price {
+    font-size: 20px;
+    font-weight: 800;
+    color: #1a1a2e;
+}
+
+.price-insight {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 100px;
+}
+
+.price-insight.good {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+.price-insight.high {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.address {
+    font-size: 15px;
+    font-weight: 500;
+    color: #4b5563;
+    margin: 0 0 12px 0;
+}
+
+.features {
+    display: flex;
+    gap: 14px;
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 12px;
+}
+
+.ai-insight {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.08));
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+}
+
+/* Skeleton Loading */
+.property-card.skeleton .card-image {
+    background: linear-gradient(90deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+.skeleton-line {
+    height: 16px;
+    background: rgba(0, 0, 0, 0.06);
+    border-radius: 8px;
+    margin-bottom: 12px;
+}
+
+.skeleton-line.wide { width: 80%; }
+.skeleton-line.medium { width: 60%; }
+.skeleton-line.narrow { width: 40%; }
+
+@@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* Error & Empty States */
+.error-state,
+.empty-state {
+    text-align: center;
+    padding: 60px 40px;
+    color: #6b7280;
+}
+
+.error-icon,
+.empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    display: block;
+}
+
+.error-state h3,
+.empty-state h3 {
+    color: #1a1a2e;
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+}
+
+.error-state p,
+.empty-state p {
+    margin: 0;
+}
+
+/* Load More */
+.load-more {
+    text-align: center;
+    padding: 32px;
+}
+
+/* Map Panel */
+.map-panel {
+    flex: 1;
+    min-width: 400px;
+    position: relative;
+    background: rgba(0, 0, 0, 0.03);
+    border-left: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* Leaflet Map Container */
+.leaflet-map-container {
+    width: 100%;
+    height: 100%;
+    min-height: calc(100vh - 80px);
+    z-index: 1;
+}
+
+/* AirBnB-Style Markers */
+.airbnb-marker-wrapper {
+    background: transparent !important;
+    border: none !important;
+}
+
+.airbnb-marker {
+    background: white;
+    padding: 8px 14px;
+    border-radius: 28px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #222;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: none;
+    white-space: nowrap;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.12);
+    transform: translate(-50%, -100%);
+    position: relative;
+    z-index: 1;
+}
+
+.airbnb-marker::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid white;
+}
+
+.airbnb-marker:hover {
+    transform: translate(-50%, -100%) scale(1.08);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2), 0 8px 24px rgba(0,0,0,0.15);
+    z-index: 100;
+}
+
+.airbnb-marker.selected {
+    background: #222;
+    color: white;
+    transform: translate(-50%, -100%) scale(1.1);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.25), 0 8px 24px rgba(0,0,0,0.2);
+    z-index: 100;
+}
+
+.airbnb-marker.selected::after {
+    border-top-color: #222;
+}
+
+.marker-price {
+    font-weight: 700;
+}
+
+/* Leaflet container - Light theme like AirBnB */
+.leaflet-container {
+    background: #f5f5f5;
+    font-family: 'Inter', 'Outfit', -apple-system, sans-serif;
+}
+
+/* Keep tiles clean - no filter for light theme */
+.leaflet-tile-pane {
+    /* Light theme - no filter needed */
+}
+
+/* Attribution styling */
+.leaflet-control-attribution {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: rgba(0, 0, 0, 0.5) !important;
+    font-size: 10px;
+    padding: 4px 8px;
+}
+
+.leaflet-control-attribution a {
+    color: rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Zoom controls - AirBnB style */
+.leaflet-control-zoom {
+    border: none !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+    border-radius: 8px !important;
+    overflow: hidden;
+}
+
+.leaflet-control-zoom a {
+    background: white !important;
+    color: #222 !important;
+    border: none !important;
+    width: 32px !important;
+    height: 32px !important;
+    line-height: 32px !important;
+    font-size: 16px !important;
+}
+
+.leaflet-control-zoom a:hover {
+    background: #f5f5f5 !important;
+}
+
+.map-coming-soon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: #9ca3af;
+}
+
+.map-coming-soon span {
+    font-size: 48px;
+    display: block;
+    opacity: 0.5;
+}
+
+.map-coming-soon p {
+    margin: 12px 0 0 0;
+}
+
+.map-pins {
+    position: absolute;
+    inset: 0;
+}
+
+.map-pin {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    padding: 6px 12px;
+    border-radius: 100px;
+    font-weight: 700;
+    font-size: 12px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    transform: translate(-50%, -100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.map-pin:hover,
+.map-pin.active {
+    background: var(--accent);
+    color: var(--bg-base);
+    transform: translate(-50%, -100%) scale(1.1);
+    z-index: 10;
+}
+
+/* Property Detail Overlay - Light theme */
+.property-detail-overlay {
+    position: absolute;
+    bottom: 24px;
+    left: 24px;
+    right: 24px;
+    padding: 24px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.close-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.06);
+    border: none;
+    color: #4b5563;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.detail-header h3 {
+    color: #1a1a2e;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+}
+
+.detail-price {
+    color: var(--accent);
+    font-size: 24px;
+    font-weight: 800;
+    margin: 0 0 16px 0;
+}
+
+.detail-features {
+    display: flex;
+    gap: 16px;
+    color: #4b5563;
+    font-size: 14px;
+    margin-bottom: 16px;
+}
+
+.avm-badge {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.08));
+    border-radius: 12px;
+    margin-bottom: 16px;
+}
+
+.avm-label {
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.avm-value {
+    color: var(--accent);
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.detail-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.detail-actions button {
+    flex: 1;
+}
+
+/* Responsive */
+@@media (max-width: 1200px) {
+    .map-panel {
+        display: none;
+    }
+    
+    .listings-panel {
+        max-width: 100%;
+    }
+}
+
+@@media (max-width: 768px) {
+    .glass-header {
+        padding: 12px 16px;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    
+    .glass-search {
+        order: 3;
+        flex: 1 1 100%;
+        margin: 0;
+    }
+    
+    .listings-panel {
+        padding: 16px;
+    }
+    
+    .listings-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Intelligence Panel Styles */
+.intelligence-panel {
+    width: 400px;
+    height: calc(100vh - 100px);
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.intelligence-panel .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.intelligence-panel .panel-header h2 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.badge {
+    padding: 4px 10px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.2));
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #a78bfa;
+}
+
+.view-tabs {
+    display: flex;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.03);
+    padding: 6px;
+    border-radius: 12px;
+}
+
+.view-tab {
+    flex: 1;
+    padding: 10px 12px;
+    background: transparent;
+    border: none;
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.view-tab:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.view-tab.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+}
+
+.filter-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.filter-section > label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.time-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.time-pill {
+    padding: 8px 14px;
+    background: rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 100px;
+    color: #4b5563;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.time-pill:hover {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+.time-pill.active {
+    background: linear-gradient(135deg, var(--accent), var(--gradient-2));
+    border-color: transparent;
+    color: white;
+}
+
+.toggle-group {
+    display: flex;
+    gap: 8px;
+}
+
+.toggle-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 16px;
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
+    color: #4b5563;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.toggle-btn:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.toggle-btn.active {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+    border-color: var(--accent);
+    color: #1a1a2e;
+}
+
+.strategy-options {
+    display: flex;
+    gap: 10px;
+}
+
+.radio-card {
+    flex: 1;
+    padding: 14px;
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.radio-card input {
+    display: none;
+}
+
+.radio-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    text-align: center;
+}
+
+.radio-content .icon {
+    font-size: 24px;
+}
+
+.radio-content .label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #1a1a2e;
+}
+
+.radio-content .desc {
+    font-size: 10px;
+    color: #9ca3af;
+}
+
+.radio-card.selected {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+    border-color: var(--accent);
+}
+
+.info-card {
+    display: flex;
+    gap: 14px;
+    padding: 16px;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 12px;
+}
+
+.info-icon {
+    font-size: 24px;
+}
+
+.info-content h4 {
+    margin: 0 0 6px 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.info-content p {
+    margin: 0;
+    font-size: 12px;
+    color: #6b7280;
+    line-height: 1.5;
+}
+
+.selected-property {
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.selected-property .property-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.selected-property .property-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+
+.close-btn {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.06);
+    border: none;
+    border-radius: 50%;
+    color: #4b5563;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.property-details {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+}
+
+.detail-row .label {
+    color: #9ca3af;
+}
+
+.detail-row .value {
+    color: #1a1a2e;
+    font-weight: 500;
+}
+
+.property-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.property-actions button {
+    flex: 1;
+}
+
+.empty-selection {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6b7280;
+}
+
+.tap-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    animation: bounce 2s infinite;
+}
+
+@@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.empty-selection h4 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    color: #1a1a2e;
+}
+
+.empty-selection p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.data-sources {
+    margin-top: auto;
+    padding-top: 20px;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.data-sources h4 {
+    margin: 0 0 12px 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: #9ca3af;
+    text-transform: uppercase;
+}
+
+.source-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.source-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+}
+
+.source-item .status {
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 10px;
+}
+
+.source-item.connected .status {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+.source-item.pending .status {
+    background: rgba(251, 191, 36, 0.2);
+    color: #fbbf24;
+}
+
+.source-item .name {
+    color: #4b5563;
+}
+</style>

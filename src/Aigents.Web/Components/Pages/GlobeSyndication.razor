@@ -1,0 +1,107 @@
+@using Aigents.Domain.Entities
+@inject IJSRuntime JSRuntime
+
+<div class="globe-container">
+    <div id="broadcast-globe" style="width: 100%; height: 500px; background: #000; border-radius: 16px; overflow: hidden;"></div>
+    
+    <div class="globe-stats-overlay">
+        <div class="stat-item">
+            <span class="stat-value">1.5B</span>
+            <span class="stat-label">Potential Reach</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value">16</span>
+            <span class="stat-label">Active Platforms</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value">3</span>
+            <span class="stat-label">Continents</span>
+        </div>
+    </div>
+
+    @if (_selectedRegion != null)
+    {
+        <div class="region-detail-panel">
+            <div class="panel-header">
+                <h4>@_selectedRegion</h4>
+                <button class="close-btn" @onclick="ClosePanel">×</button>
+            </div>
+            <div class="platform-list">
+                @foreach (var platform in _regionPlatforms)
+                {
+                    <div class="platform-item">
+                        <div class="platform-main">
+                            <span class="p-icon">@platform.Icon</span>
+                            <span class="p-name">@platform.Name</span>
+                        </div>
+                        <div class="platform-meta">
+                           <span class="p-status @platform.StatusClass">@platform.Status</span>
+                           @if (!string.IsNullOrEmpty(platform.Url))
+                           {
+                               <a href="@platform.Url" target="_blank" class="p-link">View Listing ↗</a>
+                           }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+
+
+@code {
+    private string? _selectedRegion;
+    private List<PlatformViewModel> _regionPlatforms = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("globeViz.init", "broadcast-globe", DotNetObjectReference.Create(this));
+        }
+    }
+
+    [JSInvokable]
+    public void OnRegionClick(string regionName)
+    {
+        _selectedRegion = regionName;
+        _regionPlatforms = GetPlatformsForRegion(regionName);
+        StateHasChanged();
+    }
+    
+    private void ClosePanel()
+    {
+        _selectedRegion = null;
+    }
+
+    private List<PlatformViewModel> GetPlatformsForRegion(string region)
+    {
+        // Mock data mapping - in real app, filter from latest listings
+        return region switch
+        {
+            "Australia (National)" => new()
+            {
+                new("realestate.com.au", "🏡", "Live", "live", "https://realestate.com.au/property-123"),
+                new("Domain", "🏠", "Pending", "pending", "https://domain.com.au/20123"),
+                new("Homely", "🏠", "Listed", "live", "https://homely.com.au/123"),
+                new("Soho", "📱", "Listed", "live", "https://sohoapp.com/123"),
+                new("Facebook", "📘", "Listed", "live", "https://facebook.com/marketplace/123"),
+                new("Gumtree", "🌳", "Listed", "live", "https://gumtree.com.au/123")
+            },
+            "Brisbane (Origin)" => new()
+            {
+                new("Local HQ", "🏢", "Processed", "live", "#")
+            },
+            "Canberra (ACT)" => new() { new("Allhomes", "🏙️", "Listed", "live", "https://allhomes.com.au/123") },
+            "Perth (WA)" => new() { new("REIWA", "☀️", "Listed", "live", "https://reiwa.com.au/123") },
+            "Melbourne (VIC)" => new() { new("RealEstateView", "👁️", "Listed", "live", "https://realestateview.com.au/123") },
+            "China" => new() { new("Juwai", "🌏", "Listed", "live", "https://juwai.com/123") },
+            "USA" => new() { new("Zillow", "🏠", "Listed", "live", "https://zillow.com/123") },
+            "Global" => new() { new("eBay Real Estate", "🛍️", "Listed", "live", "https://ebay.com/itm/123") },
+            _ => new()
+        };
+    }
+
+    public record PlatformViewModel(string Name, string Icon, string Status, string StatusClass, string Url);
+}

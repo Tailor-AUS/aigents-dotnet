@@ -1,0 +1,58 @@
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+
+<div class="address-autocomplete-container">
+    <input @ref="_inputElement" 
+           id="@Id" 
+           type="text" 
+           class="@Class" 
+           placeholder="@Placeholder" 
+           @oninput="HandleInput" />
+</div>
+
+@code {
+    [Parameter] public string Id { get; set; } = "address-autocomplete";
+    [Parameter] public string Class { get; set; } = "large-input";
+    [Parameter] public string Placeholder { get; set; } = "e.g. 67 Northview Outlook, Paddington QLD";
+    [Parameter] public EventCallback<AddressResult> OnAddressSelected { get; set; }
+
+    private ElementReference _inputElement;
+    private DotNetObjectReference<AddressAutocomplete>? _dotNetRef;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dotNetRef = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync("addressAutocomplete.init", _inputElement, _dotNetRef);
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnPlaceChanged(AddressResult result)
+    {
+        await OnAddressSelected.InvokeAsync(result);
+    }
+
+    private void HandleInput(ChangeEventArgs e)
+    {
+        // Optional: handle typing if needed
+    }
+
+    public void Dispose()
+    {
+        _dotNetRef?.Dispose();
+    }
+
+    public class AddressResult
+    {
+        public string FullAddress { get; set; } = "";
+        public string StreetNumber { get; set; } = "";
+        public string Route { get; set; } = "";
+        public string Suburb { get; set; } = "";
+        public string State { get; set; } = "";
+        public string Postcode { get; set; } = "";
+        public double Lat { get; set; }
+        public double Lng { get; set; }
+    }
+}

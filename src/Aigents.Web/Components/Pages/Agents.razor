@@ -1,0 +1,1213 @@
+@page "/agents"
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@using Microsoft.AspNetCore.Components.Web
+@inject NavigationManager Navigation
+
+<PageTitle>Aigents - Agent Portal | Sell Australian Property from Anywhere</PageTitle>
+
+<div class="agent-wrapper">
+    @* Interactive ripple background *@
+    <canvas id="ripple-canvas-agents" class="ripple-canvas"></canvas>
+    <div class="agent-bg"></div>
+    
+    @* Navigation *@
+    <nav class="agent-nav">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <span class="logo-mark">◆</span>
+                <span class="logo-text">aigents</span>
+            </a>
+            <div class="nav-links">
+                <a href="/" class="nav-link">For Sellers</a>
+                <a href="#how-it-works" class="nav-link">How It Works</a>
+                <a href="#pricing" class="nav-link">Pricing</a>
+                <button class="nav-cta">Sign In</button>
+            </div>
+        </div>
+    </nav>
+
+    @* Hero Section - Split Layout *@
+    <section class="hero-section">
+        <div class="hero-grid">
+            @* Left Content *@
+            <div class="hero-left animate-fade-up">
+                <div class="eyebrow">
+                    <span class="eyebrow-icon">◆</span>
+                    <span>Agent Portal</span>
+                </div>
+                
+                <h1 class="hero-headline">
+                    Have buyers?<br/>
+                    <span class="headline-gradient">Find them a home.</span>
+                </h1>
+                
+                <p class="hero-subheadline">
+                    Access our database of open listings. Submit offers on behalf 
+                    of your buyers. Compete on price, terms, and commission — 
+                    not your track record.
+                </p>
+                
+                @* Agent Type Selection *@
+                <div class="agent-paths">
+                    <div class="agent-path" @onclick="() => SelectPath(true)">
+                        <div class="path-icon">🇦🇺</div>
+                        <div class="path-content">
+                            <strong>AU Licensed Agent</strong>
+                            <span>I have an Australian real estate license</span>
+                        </div>
+                        <span class="path-arrow">→</span>
+                    </div>
+                    <div class="agent-path" @onclick="() => SelectPath(false)">
+                        <div class="path-icon">🌏</div>
+                        <div class="path-content">
+                            <strong>International Partner</strong>
+                            <span>I have overseas buyers for AU properties</span>
+                        </div>
+                        <span class="path-arrow">→</span>
+                    </div>
+                </div>
+                
+                @* Trust Badges *@
+                <div class="trust-badges">
+                    <div class="trust-badge">
+                        <span class="badge-check">✓</span>
+                        <span>500+ open listings</span>
+                    </div>
+                    <div class="trust-badge">
+                        <span class="badge-check">✓</span>
+                        <span>Direct to seller</span>
+                    </div>
+                    <div class="trust-badge">
+                        <span class="badge-check">✓</span>
+                        <span>Live offers</span>
+                    </div>
+                </div>
+            </div>
+            
+            @* Right Visual *@
+            <div class="hero-right animate-fade-up delay-2">
+                <div class="mockup-container">
+                    @* Dashboard Mockup *@
+                    <div class="dashboard-mockup">
+                        <div class="dashboard-header">
+                            <span class="dash-title">Open Listings</span>
+                            <span class="dash-count">127 available</span>
+                        </div>
+                        
+                        @* Listing Cards *@
+                        <div class="listing-preview">
+                            <div class="listing-img-placeholder"></div>
+                            <div class="listing-info">
+                                <div class="listing-address">42 Ocean View Dr, Byron Bay</div>
+                                <div class="listing-meta">5 bed • Beachfront • $2.8M guide</div>
+                                <div class="listing-status">
+                                    <span class="status-dot"></span>
+                                    2 offers pending
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="listing-preview">
+                            <div class="listing-img-placeholder alt"></div>
+                            <div class="listing-info">
+                                <div class="listing-address">18 Teneriffe Dr, Brisbane</div>
+                                <div class="listing-meta">3 bed • River views • $1.4M guide</div>
+                                <div class="listing-status hot">
+                                    <span class="status-dot"></span>
+                                    5 offers • Hot
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="listing-preview">
+                            <div class="listing-img-placeholder"></div>
+                            <div class="listing-info">
+                                <div class="listing-address">67 Northview Outlook</div>
+                                <div class="listing-meta">4 bed • Family home • $1.2M guide</div>
+                                <div class="listing-status new">
+                                    <span class="status-dot"></span>
+                                    New listing
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    @* Floating Badges *@
+                    <div class="floating-badge badge-1">
+                        <span class="float-icon">🔔</span>
+                        <div class="float-text">
+                            <strong>New Listing</strong>
+                            <span>Byron Bay, 5 bed</span>
+                        </div>
+                    </div>
+                    <div class="floating-badge badge-2">
+                        <span class="float-icon">💰</span>
+                        <div class="float-text">
+                            <strong>Offer Accepted</strong>
+                            <span>$1.18M • 1.5%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    @* How It Works Section *@
+    <section class="how-section" id="how-it-works">
+        <div class="how-container">
+            <h2 class="section-title">How it works for agents</h2>
+            <p class="section-subtitle">Stop chasing listings. Start matching buyers.</p>
+            
+            <div class="how-steps">
+                <div class="how-step">
+                    <div class="step-num">01</div>
+                    <h3>Browse open listings</h3>
+                    <p>Access our database of verified open listings across Australia. Full property details, seller expectations, and competition levels.</p>
+                </div>
+                <div class="how-step">
+                    <div class="step-num">02</div>
+                    <h3>Submit offers</h3>
+                    <p>Have a buyer? Submit their offer with price, terms, settlement, and your commission. Sellers see all offers side-by-side.</p>
+                </div>
+                <div class="how-step">
+                    <div class="step-num">03</div>
+                    <h3>Close the deal</h3>
+                    <p>If your offer is accepted, you become the exclusive agent for that sale. Sign Form 6 and close. It's that simple.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    @* International Agents Section *@
+    <section class="intl-section" id="international">
+        <div class="intl-container">
+            <div class="intl-content">
+                <div class="intl-badge">🌏 International Partners</div>
+                <h2>Sell Australian property from anywhere in the world.</h2>
+                <p>
+                    Not licensed in Australia? No problem. We handle the legal, compliance, 
+                    and paperwork. You bring the buyer, we close the deal. You earn commission.
+                </p>
+                <div class="intl-features">
+                    <div class="intl-feature">
+                        <span class="feature-icon">✓</span>
+                        <span>We provide the AU license</span>
+                    </div>
+                    <div class="intl-feature">
+                        <span class="feature-icon">✓</span>
+                        <span>We handle Form 6 & contracts</span>
+                    </div>
+                    <div class="intl-feature">
+                        <span class="feature-icon">✓</span>
+                        <span>Commission split on settlement</span>
+                    </div>
+                </div>
+                <button class="intl-cta">Learn More</button>
+            </div>
+            <div class="intl-visual">
+                <div class="globe-graphic">
+                    <div class="globe-dot dot-1">🇨🇳</div>
+                    <div class="globe-dot dot-2">🇸🇬</div>
+                    <div class="globe-dot dot-3">🇭🇰</div>
+                    <div class="globe-dot dot-4">🇬🇧</div>
+                    <div class="globe-dot dot-5">🇺🇸</div>
+                    <div class="globe-center">🇦🇺</div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    @* Pricing Section *@
+    <section class="pricing-section" id="pricing">
+        <div class="pricing-container">
+            <h2 class="section-title">Simple, transparent pricing</h2>
+            <p class="section-subtitle">Choose the plan that works for you.</p>
+            
+            <div class="pricing-cards">
+                <div class="pricing-card">
+                    <div class="price-header">
+                        <h3>Free</h3>
+                        <div class="price">$0<span>/month</span></div>
+                    </div>
+                    <ul class="price-features">
+                        <li>✓ Browse all listings</li>
+                        <li>✓ View listing details (limited)</li>
+                        <li>✓ Save favorites</li>
+                        <li class="disabled">✗ Submit offers</li>
+                        <li class="disabled">✗ Full property details</li>
+                        <li class="disabled">✗ Seller contact info</li>
+                    </ul>
+                    <button class="price-cta secondary">Get Started</button>
+                </div>
+                
+                <div class="pricing-card featured">
+                    <div class="featured-badge">Most Popular</div>
+                    <div class="price-header">
+                        <h3>Pro</h3>
+                        <div class="price">$99<span>/month</span></div>
+                    </div>
+                    <ul class="price-features">
+                        <li>✓ Browse all listings</li>
+                        <li>✓ Full property details</li>
+                        <li>✓ Unlimited offers</li>
+                        <li>✓ Seller contact info</li>
+                        <li>✓ Priority notifications</li>
+                        <li>✓ Offer analytics</li>
+                    </ul>
+                    <button class="price-cta primary">Start Free Trial</button>
+                </div>
+                
+                <div class="pricing-card">
+                    <div class="price-header">
+                        <h3>Enterprise</h3>
+                        <div class="price">Custom</div>
+                    </div>
+                    <ul class="price-features">
+                        <li>✓ Everything in Pro</li>
+                        <li>✓ Team accounts</li>
+                        <li>✓ Agency dashboard</li>
+                        <li>✓ White-label options</li>
+                        <li>✓ API access</li>
+                        <li>✓ Dedicated support</li>
+                    </ul>
+                    <button class="price-cta secondary">Contact Sales</button>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    @* CTA Section *@
+    <section class="final-cta">
+        <div class="cta-container">
+            <h2>Ready to access open listings?</h2>
+            <p>Join hundreds of agents already using aigents to find properties for their buyers.</p>
+            <button class="mega-cta">Create Agent Account</button>
+        </div>
+    </section>
+</div>
+
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   AGENT PORTAL - Premium Design
+═══════════════════════════════════════════════════════════════ */
+
+@@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+.agent-wrapper {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #fafafa;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    position: relative;
+    overflow-x: hidden;
+}
+
+.ripple-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.agent-bg {
+    position: fixed;
+    inset: 0;
+    background: 
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(139, 92, 246, 0.12), transparent),
+        radial-gradient(ellipse 60% 50% at 80% 50%, rgba(99, 102, 241, 0.08), transparent);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Navigation */
+.agent-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: rgba(250, 250, 250, 0.8);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.logo-mark {
+    font-size: 20px;
+    color: #8b5cf6;
+}
+
+.logo-text {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a2e;
+    letter-spacing: -0.02em;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+}
+
+.nav-link {
+    font-size: 14px;
+    font-weight: 500;
+    color: #6b7280;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.nav-link:hover {
+    color: #1a1a2e;
+}
+
+.nav-cta {
+    padding: 10px 20px;
+    background: #1a1a2e;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.nav-cta:hover {
+    background: #2d2d44;
+    transform: translateY(-1px);
+}
+
+/* Hero Section */
+.hero-section {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 100px 24px 60px;
+    position: relative;
+    z-index: 2;
+}
+
+.hero-grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+}
+
+.hero-left {
+    text-align: left;
+}
+
+.eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #8b5cf6;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.eyebrow-icon {
+    font-size: 12px;
+}
+
+.hero-headline {
+    font-size: clamp(40px, 6vw, 64px);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    color: #1a1a2e;
+    margin-bottom: 20px;
+}
+
+.headline-gradient {
+    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradientFlow 8s ease infinite;
+}
+
+@@keyframes gradientFlow {
+    0%, 100% { background-position: 0% center; }
+    50% { background-position: 100% center; }
+}
+
+.hero-subheadline {
+    font-size: 18px;
+    line-height: 1.7;
+    color: #6b7280;
+    margin-bottom: 32px;
+    max-width: 480px;
+}
+
+/* Agent Path Selection */
+.agent-paths {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 32px;
+}
+
+.agent-path {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: white;
+    border: 2px solid rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.agent-path:hover {
+    border-color: #8b5cf6;
+    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.15);
+    transform: translateX(4px);
+}
+
+.path-icon {
+    font-size: 24px;
+}
+
+.path-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.path-content strong {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+
+.path-content span {
+    font-size: 13px;
+    color: #9ca3af;
+}
+
+.path-arrow {
+    font-size: 18px;
+    color: #8b5cf6;
+    transition: transform 0.2s;
+}
+
+.agent-path:hover .path-arrow {
+    transform: translateX(4px);
+}
+
+/* Trust Badges */
+.trust-badges {
+    display: flex;
+    gap: 24px;
+}
+
+.trust-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.badge-check {
+    color: #8b5cf6;
+    font-weight: 600;
+}
+
+/* Hero Right - Dashboard Mockup */
+.hero-right {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.mockup-container {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+}
+
+.dashboard-mockup {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.12);
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    padding: 20px;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.dash-title {
+    font-weight: 700;
+    font-size: 18px;
+    color: #1a1a2e;
+}
+
+.dash-count {
+    font-size: 13px;
+    color: #8b5cf6;
+    font-weight: 600;
+    background: rgba(139, 92, 246, 0.1);
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+.listing-preview {
+    display: flex;
+    gap: 14px;
+    padding: 14px;
+    background: #f8fafc;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    transition: all 0.2s;
+}
+
+.listing-preview:hover {
+    background: #f1f5f9;
+}
+
+.listing-img-placeholder {
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.listing-img-placeholder.alt {
+    background: linear-gradient(135deg, #c4b5fd, #a78bfa);
+}
+
+.listing-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.listing-address {
+    font-weight: 600;
+    font-size: 14px;
+    color: #1a1a2e;
+    margin-bottom: 4px;
+}
+
+.listing-meta {
+    font-size: 12px;
+    color: #9ca3af;
+    margin-bottom: 6px;
+}
+
+.listing-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.status-dot {
+    width: 6px;
+    height: 6px;
+    background: #6b7280;
+    border-radius: 50%;
+}
+
+.listing-status.hot .status-dot {
+    background: #f97316;
+    animation: pulse 1s infinite;
+}
+
+.listing-status.new .status-dot {
+    background: #10b981;
+}
+
+@@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Floating Badges */
+.floating-badge {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    animation: floatBadge 4s ease-in-out infinite;
+}
+
+.badge-1 {
+    top: 0;
+    right: -10px;
+    animation-delay: 0s;
+}
+
+.badge-2 {
+    bottom: 20%;
+    left: -20px;
+    animation-delay: 2s;
+}
+
+@@keyframes floatBadge {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.float-icon {
+    font-size: 20px;
+}
+
+.float-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.float-text strong {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+
+.float-text span {
+    font-size: 11px;
+    color: #9ca3af;
+}
+
+/* How Section */
+.how-section {
+    padding: 120px 24px;
+    background: white;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.how-container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.section-title {
+    font-size: 36px;
+    font-weight: 800;
+    color: #1a1a2e;
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+.section-subtitle {
+    font-size: 18px;
+    color: #6b7280;
+    text-align: center;
+    margin-bottom: 64px;
+}
+
+.how-steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 48px;
+}
+
+.how-step {
+    text-align: left;
+}
+
+.step-num {
+    font-size: 48px;
+    font-weight: 800;
+    color: rgba(139, 92, 246, 0.15);
+    margin-bottom: 16px;
+    line-height: 1;
+}
+
+.how-step h3 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 12px;
+}
+
+.how-step p {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #6b7280;
+}
+
+/* International Section */
+.intl-section {
+    padding: 120px 24px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.intl-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+}
+
+.intl-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    background: rgba(139, 92, 246, 0.1);
+    color: #8b5cf6;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 20px;
+    margin-bottom: 20px;
+}
+
+.intl-content h2 {
+    font-size: 36px;
+    font-weight: 800;
+    color: #1a1a2e;
+    line-height: 1.2;
+    margin-bottom: 20px;
+}
+
+.intl-content p {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #6b7280;
+    margin-bottom: 24px;
+}
+
+.intl-features {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 32px;
+}
+
+.intl-feature {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    color: #1a1a2e;
+}
+
+.feature-icon {
+    color: #10b981;
+    font-weight: 700;
+}
+
+.intl-cta {
+    padding: 14px 28px;
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.intl-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.35);
+}
+
+.intl-visual {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.globe-graphic {
+    position: relative;
+    width: 300px;
+    height: 300px;
+}
+
+.globe-dot {
+    position: absolute;
+    font-size: 28px;
+    animation: orbitFloat 6s ease-in-out infinite;
+}
+
+.dot-1 { top: 10%; left: 10%; animation-delay: 0s; }
+.dot-2 { top: 5%; right: 20%; animation-delay: 1s; }
+.dot-3 { top: 30%; right: 5%; animation-delay: 2s; }
+.dot-4 { bottom: 20%; left: 5%; animation-delay: 3s; }
+.dot-5 { bottom: 10%; right: 15%; animation-delay: 4s; }
+
+.globe-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 64px;
+    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.15));
+}
+
+@@keyframes orbitFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+/* Pricing Section */
+.pricing-section {
+    padding: 120px 24px;
+    background: white;
+}
+
+.pricing-container {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.pricing-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+    margin-top: 48px;
+}
+
+.pricing-card {
+    background: #f8fafc;
+    border-radius: 20px;
+    padding: 32px;
+    border: 2px solid transparent;
+    transition: all 0.3s;
+    position: relative;
+}
+
+.pricing-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+}
+
+.pricing-card.featured {
+    background: white;
+    border-color: #8b5cf6;
+    box-shadow: 0 12px 40px rgba(139, 92, 246, 0.15);
+}
+
+.featured-badge {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 16px;
+    border-radius: 20px;
+}
+
+.price-header h3 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 8px;
+}
+
+.price {
+    font-size: 48px;
+    font-weight: 800;
+    color: #1a1a2e;
+    margin-bottom: 24px;
+}
+
+.price span {
+    font-size: 16px;
+    font-weight: 500;
+    color: #9ca3af;
+}
+
+.price-features {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 32px 0;
+}
+
+.price-features li {
+    padding: 10px 0;
+    font-size: 14px;
+    color: #4b5563;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.price-features li.disabled {
+    color: #d1d5db;
+}
+
+.price-cta {
+    width: 100%;
+    padding: 14px 24px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.price-cta.primary {
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    color: white;
+    border: none;
+}
+
+.price-cta.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.35);
+}
+
+.price-cta.secondary {
+    background: transparent;
+    color: #1a1a2e;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+.price-cta.secondary:hover {
+    border-color: #1a1a2e;
+}
+
+/* Final CTA */
+.final-cta {
+    padding: 100px 24px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%);
+    text-align: center;
+}
+
+.cta-container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.final-cta h2 {
+    font-size: 36px;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 16px;
+}
+
+.final-cta p {
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 32px;
+}
+
+.mega-cta {
+    padding: 18px 40px;
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.mega-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(139, 92, 246, 0.4);
+}
+
+/* Animations */
+.animate-fade-up {
+    opacity: 0;
+    transform: translateY(30px);
+    animation: fadeUp 0.8s ease forwards;
+}
+
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; }
+
+@@keyframes fadeUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive */
+@@media (max-width: 968px) {
+    .hero-grid {
+        grid-template-columns: 1fr;
+        gap: 48px;
+        text-align: center;
+    }
+    
+    .hero-left {
+        text-align: center;
+        order: 1;
+    }
+    
+    .hero-right {
+        order: 2;
+    }
+    
+    .hero-subheadline {
+        max-width: 100%;
+    }
+    
+    .trust-badges {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .floating-badge {
+        display: none;
+    }
+    
+    .intl-container {
+        grid-template-columns: 1fr;
+        gap: 48px;
+        text-align: center;
+    }
+    
+    .intl-features {
+        align-items: center;
+    }
+    
+    .pricing-cards {
+        grid-template-columns: 1fr;
+        max-width: 400px;
+        margin: 48px auto 0;
+    }
+}
+
+@@media (max-width: 768px) {
+    .nav-links {
+        display: none;
+    }
+    
+    .hero-section {
+        padding: 100px 20px 60px;
+    }
+    
+    .hero-headline {
+        font-size: 36px;
+    }
+    
+    .how-steps {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+}
+</style>
+
+@code {
+    private void SelectPath(bool isAustralian)
+    {
+        if (isAustralian)
+        {
+            Navigation.NavigateTo("/agents/register?type=au");
+        }
+        else
+        {
+            Navigation.NavigateTo("/agents/register?type=international");
+        }
+    }
+}
+
+<script suppress-error="BL9992">
+    (function() {
+        const canvas = document.getElementById('ripple-canvas-agents');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        let ripples = [];
+        let mouseX = 0, mouseY = 0;
+        let lastRippleTime = 0;
+        
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resize();
+        window.addEventListener('resize', resize);
+        
+        function easeOutCubic(t) {
+            return 1 - Math.pow(1 - t, 3);
+        }
+        
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            
+            const now = Date.now();
+            if (now - lastRippleTime > 120) {
+                ripples.push({
+                    x: mouseX,
+                    y: mouseY,
+                    progress: 0,
+                    maxRadius: 150 + Math.random() * 50
+                });
+                lastRippleTime = now;
+            }
+            
+            if (ripples.length > 8) ripples.shift();
+        });
+        
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            ripples.forEach((ripple) => {
+                ripple.progress += 0.006;
+                const eased = easeOutCubic(ripple.progress);
+                const radius = ripple.maxRadius * eased;
+                const opacity = 0.06 * (1 - eased);
+                
+                if (opacity > 0.001) {
+                    ctx.beginPath();
+                    ctx.arc(ripple.x, ripple.y, radius, 0, Math.PI * 2);
+                    ctx.strokeStyle = `rgba(139, 92, 246, ${opacity})`;
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+            });
+            
+            ripples = ripples.filter(r => r.progress < 1);
+            requestAnimationFrame(draw);
+        }
+        draw();
+    })();
+</script>

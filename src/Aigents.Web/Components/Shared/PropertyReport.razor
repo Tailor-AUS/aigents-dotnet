@@ -1,0 +1,85 @@
+@namespace Aigents.Web.Components.Shared
+
+<div class="report-container animate-in">
+    <div class="report-header">
+        <div class="header-content">
+            <div class="badge-report">CONFIDENTIAL REPORT</div>
+            <h2 class="property-address">@ReportData.Address</h2>
+            <div class="valuation-box">
+                <span class="val-label">Estimated Market Value</span>
+                <span class="val-price">@ReportData.EstimatedValue</span>
+                <div class="val-confidence">
+                    <span class="confidence-dot"></span>
+                    @ReportData.Confidence% Confidence
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="report-grid">
+        <!-- Market Activity -->
+        <div class="card comps-card">
+            <h3 class="card-title">Recent Comparable Sales</h3>
+            <div class="comps-list">
+                @foreach (var comp in ReportData.Comparables)
+                {
+                    <div class="comp-item">
+                        <div class="comp-icon">🏠</div>
+                        <div class="comp-details">
+                            <span class="comp-addr">@comp.Address</span>
+                            <span class="comp-feats">@comp.Features</span>
+                            <span class="comp-date">@comp.Date</span>
+                        </div>
+                        <div class="comp-price">@comp.Price</div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Development & AI Insight -->
+        <div class="right-col">
+            <div class="card dev-card">
+                <h3 class="card-title">💎 Hidden Value</h3>
+                <p class="dev-text">@ReportData.DevelopmentPotential</p>
+            </div>
+
+            <div class="card ai-card">
+                <h3 class="card-title">🤖 AI Agent Insight</h3>
+                <p class="ai-text">@ReportData.AiSummary</p>
+                <div class="features-cloud">
+                    @foreach (var feature in ReportData.KeyFeatures)
+                    {
+                        <span class="feature-chip">@feature</span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="report-actions">
+        <button class="action-btn primary" @onclick="OnUnlock">
+            Claim this Listing & Start Selling
+        </button>
+        <button class="action-btn secondary" @onclick="OnChat">
+            Ask AI about this report
+        </button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public PropertyReportData ReportData { get; set; } = default!;
+    [Parameter] public EventCallback OnUnlock { get; set; }
+    [Parameter] public EventCallback OnChat { get; set; }
+
+    public record PropertyReportData(
+        string Address,
+        string EstimatedValue,
+        int Confidence,
+        List<ComparableSale> Comparables,
+        List<string> KeyFeatures,
+        string DevelopmentPotential,
+        string AiSummary
+    );
+
+    public record ComparableSale(string Address, string Price, string Date, string Features);
+}

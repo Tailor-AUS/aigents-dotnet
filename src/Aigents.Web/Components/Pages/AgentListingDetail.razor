@@ -1,0 +1,949 @@
+@page "/agents/listing/{Id:int}"
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@using Microsoft.AspNetCore.Components.Web
+@inject NavigationManager Navigation
+
+<PageTitle>67 Northview Outlook | aigents Agent Portal</PageTitle>
+
+<div class="detail-wrapper">
+    @* Navigation *@
+    <nav class="detail-nav">
+        <div class="nav-container">
+            <a href="/agents" class="logo">
+                <span class="logo-mark">◆</span>
+                <span class="logo-text">aigents</span>
+                <span class="portal-badge">Agent Portal</span>
+            </a>
+            <div class="nav-links">
+                <a href="/agents/browse" class="nav-link">Browse Listings</a>
+                <a href="/agents/my-offers" class="nav-link">My Offers</a>
+                <div class="user-menu">
+                    <span class="user-avatar">JS</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    @* Back Link *@
+    <div class="back-bar">
+        <a href="/agents/browse" class="back-link">← Back to listings</a>
+    </div>
+    
+    @* Main Content *@
+    <main class="detail-main">
+        <div class="detail-grid">
+            @* Left Column - Property Info *@
+            <div class="property-column">
+                @* Image Gallery *@
+                <div class="gallery">
+                    <div class="main-image">
+                        <img src="/images/property-hero.jpg" alt="67 Northview Outlook" />
+                        <div class="image-actions">
+                            <button class="gallery-btn">📷 12 Photos</button>
+                            <button class="gallery-btn">🎥 Video Tour</button>
+                        </div>
+                    </div>
+                </div>
+                
+                @* Property Header *@
+                <div class="property-header">
+                    <div class="header-top">
+                        <div class="status-badges">
+                            <span class="status-badge live">● Live</span>
+                            <span class="status-badge hot">🔥 3 offers</span>
+                        </div>
+                        <button class="save-btn">♡ Save</button>
+                    </div>
+                    <h1>67 Northview Outlook</h1>
+                    <p class="suburb">Paddington, QLD 4064</p>
+                    
+                    <div class="property-specs">
+                        <div class="spec">
+                            <span class="spec-value">4</span>
+                            <span class="spec-label">Bedrooms</span>
+                        </div>
+                        <div class="spec">
+                            <span class="spec-value">2</span>
+                            <span class="spec-label">Bathrooms</span>
+                        </div>
+                        <div class="spec">
+                            <span class="spec-value">2</span>
+                            <span class="spec-label">Car Spaces</span>
+                        </div>
+                        <div class="spec">
+                            <span class="spec-value">650m²</span>
+                            <span class="spec-label">Land Size</span>
+                        </div>
+                    </div>
+                </div>
+                
+                @* Property Description *@
+                <div class="property-section">
+                    <h2>About this property</h2>
+                    <div class="description">
+                        <p>
+                            Positioned in one of Paddington's most sought-after streets, this beautifully renovated 
+                            Queenslander offers the perfect blend of heritage charm and modern luxury. Featuring 
+                            soaring ceilings, polished timber floors, and seamless indoor-outdoor living.
+                        </p>
+                        <p>
+                            The open-plan living area flows effortlessly to a stunning entertainer's deck with 
+                            city glimpses. The gourmet kitchen boasts stone benchtops, quality appliances, and 
+                            a butler's pantry. Master suite includes walk-in robe and ensuite.
+                        </p>
+                        <h3>Key Features:</h3>
+                        <ul>
+                            <li>Fully renovated heritage Queenslander</li>
+                            <li>North-facing entertainer's deck</li>
+                            <li>Gourmet kitchen with butler's pantry</li>
+                            <li>Master suite with walk-in robe and ensuite</li>
+                            <li>Ducted air-conditioning throughout</li>
+                            <li>Double lock-up garage with internal access</li>
+                            <li>Walking distance to Paddington shops and cafes</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                @* Seller Expectations *@
+                <div class="property-section">
+                    <h2>Seller Expectations</h2>
+                    <div class="expectations-grid">
+                        <div class="expectation">
+                            <span class="exp-label">Price Guide</span>
+                            <span class="exp-value">$1,150,000 - $1,250,000</span>
+                        </div>
+                        <div class="expectation">
+                            <span class="exp-label">Preferred Settlement</span>
+                            <span class="exp-value">30-60 days</span>
+                        </div>
+                        <div class="expectation">
+                            <span class="exp-label">Commission Cap</span>
+                            <span class="exp-value">2.5% or below preferred</span>
+                        </div>
+                        <div class="expectation">
+                            <span class="exp-label">Open to</span>
+                            <span class="exp-value">All offer types</span>
+                        </div>
+                    </div>
+                </div>
+                
+                @* Current Offers (Anonymized) *@
+                <div class="property-section">
+                    <h2>Current Offers</h2>
+                    <p class="section-note">3 offers currently submitted. Details are anonymized until your offer is accepted.</p>
+                    <div class="offers-table">
+                        <div class="offer-row header">
+                            <span>Offer</span>
+                            <span>Price</span>
+                            <span>Commission</span>
+                            <span>Settlement</span>
+                            <span>Conditions</span>
+                        </div>
+                        <div class="offer-row">
+                            <span class="offer-num">#1</span>
+                            <span>$1,150,000</span>
+                            <span>1.8%</span>
+                            <span>60 days</span>
+                            <span class="condition finance">Subject to Finance</span>
+                        </div>
+                        <div class="offer-row highlight">
+                            <span class="offer-num">#2</span>
+                            <span>$1,180,000</span>
+                            <span>1.5%</span>
+                            <span>30 days</span>
+                            <span class="condition cash">Cash Unconditional</span>
+                        </div>
+                        <div class="offer-row">
+                            <span class="offer-num">#3</span>
+                            <span>$1,120,000</span>
+                            <span>2.0%</span>
+                            <span>45 days</span>
+                            <span class="condition approved">Pre-approved</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            @* Right Column - Submit Offer *@
+            <div class="offer-column">
+                <div class="offer-card">
+                    <h2>Submit an Offer</h2>
+                    <p class="offer-intro">Have a buyer for this property? Submit their offer below.</p>
+                    
+                    <div class="offer-form">
+                        @* Offer Price *@
+                        <div class="form-group">
+                            <label>Offer Price</label>
+                            <div class="price-input">
+                                <span class="currency">$</span>
+                                <input type="text" placeholder="1,200,000" @bind="_offerPrice" />
+                            </div>
+                        </div>
+                        
+                        @* Commission *@
+                        <div class="form-group">
+                            <label>Your Commission Rate</label>
+                            <div class="commission-input">
+                                <input type="text" placeholder="1.5" @bind="_commission" />
+                                <span class="percent">%</span>
+                            </div>
+                            <span class="input-hint">Seller prefers ≤ 2.5%</span>
+                        </div>
+                        
+                        @* Settlement *@
+                        <div class="form-group">
+                            <label>Settlement Period</label>
+                            <select @bind="_settlement">
+                                <option value="">Select settlement period</option>
+                                <option value="14">14 days</option>
+                                <option value="21">21 days</option>
+                                <option value="30">30 days</option>
+                                <option value="45">45 days</option>
+                                <option value="60">60 days</option>
+                                <option value="90">90 days</option>
+                            </select>
+                        </div>
+                        
+                        @* Conditions *@
+                        <div class="form-group">
+                            <label>Conditions</label>
+                            <div class="condition-options">
+                                <label class="condition-option @(_condition == "cash" ? "selected" : "")" @onclick="SelectCashCondition">
+                                    <input type="radio" name="condition" value="cash" checked="@(_condition == "cash")" />
+                                    <span class="option-content">
+                                        <strong>Cash / Unconditional</strong>
+                                        <span>No finance or other conditions</span>
+                                    </span>
+                                </label>
+                                <label class="condition-option @(_condition == "finance" ? "selected" : "")" @onclick="SelectFinanceCondition">
+                                    <input type="radio" name="condition" value="finance" checked="@(_condition == "finance")" />
+                                    <span class="option-content">
+                                        <strong>Subject to Finance</strong>
+                                        <span>Buyer requires loan approval</span>
+                                    </span>
+                                </label>
+                                <label class="condition-option @(_condition == "preapproved" ? "selected" : "")" @onclick="SelectPreapprovedCondition">
+                                    <input type="radio" name="condition" value="preapproved" checked="@(_condition == "preapproved")" />
+                                    <span class="option-content">
+                                        <strong>Pre-approved Finance</strong>
+                                        <span>Buyer has pre-approval letter</span>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        @* Buyer Info *@
+                        <div class="form-group">
+                            <label>Buyer Type</label>
+                            <select @bind="_buyerType">
+                                <option value="">Select buyer type</option>
+                                <option value="local">Local buyer (Australian)</option>
+                                <option value="expat">Australian expat</option>
+                                <option value="overseas">Overseas investor</option>
+                                <option value="first-home">First home buyer</option>
+                            </select>
+                        </div>
+                        
+                        @* Additional Notes *@
+                        <div class="form-group">
+                            <label>Additional Notes (optional)</label>
+                            <textarea placeholder="Any additional information about the buyer or offer..." @bind="_notes"></textarea>
+                        </div>
+                        
+                        @* Submit *@
+                        <button class="submit-offer-btn" @onclick="SubmitOffer">
+                            Submit Offer
+                            <span class="btn-arrow">→</span>
+                        </button>
+                        
+                        <p class="offer-note">
+                            By submitting, you confirm this is a genuine offer from a qualified buyer. 
+                            Offers are binding once accepted.
+                        </p>
+                    </div>
+                </div>
+                
+                @* Agent Help *@
+                <div class="help-card">
+                    <h3>Need help?</h3>
+                    <p>Have questions about this property or submitting offers?</p>
+                    <button class="help-btn">💬 Chat with Support</button>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<style>
+@@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+.detail-wrapper {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f8fafc;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
+
+.detail-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: white;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.nav-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+}
+
+.logo-mark {
+    font-size: 20px;
+    color: #8b5cf6;
+}
+
+.logo-text {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+
+.portal-badge {
+    font-size: 11px;
+    font-weight: 600;
+    color: #8b5cf6;
+    background: rgba(139, 92, 246, 0.1);
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-left: 8px;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.nav-link {
+    font-size: 14px;
+    font-weight: 500;
+    color: #6b7280;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.nav-link:hover {
+    color: #1a1a2e;
+}
+
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.back-bar {
+    padding: 16px 24px;
+    margin-top: 60px;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.back-link {
+    font-size: 14px;
+    color: #6b7280;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.back-link:hover {
+    color: #8b5cf6;
+}
+
+.detail-main {
+    padding: 0 24px 60px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    gap: 40px;
+    align-items: start;
+}
+
+/* Gallery */
+.gallery {
+    margin-bottom: 32px;
+}
+
+.main-image {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.main-image img {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+}
+
+.image-actions {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    display: flex;
+    gap: 8px;
+}
+
+.gallery-btn {
+    padding: 8px 16px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition: background 0.2s;
+}
+
+.gallery-btn:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+/* Property Header */
+.property-header {
+    margin-bottom: 32px;
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.status-badges {
+    display: flex;
+    gap: 8px;
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-badge.live {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+}
+
+.status-badge.hot {
+    background: rgba(249, 115, 22, 0.1);
+    color: #ea580c;
+}
+
+.save-btn {
+    padding: 8px 16px;
+    background: white;
+    border: 2px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.save-btn:hover {
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
+.property-header h1 {
+    font-size: 32px;
+    font-weight: 800;
+    color: #1a1a2e;
+    margin: 0 0 4px 0;
+}
+
+.suburb {
+    font-size: 16px;
+    color: #6b7280;
+    margin: 0 0 24px 0;
+}
+
+.property-specs {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    padding: 20px 0;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.spec {
+    text-align: center;
+}
+
+.spec-value {
+    display: block;
+    font-size: 24px;
+    font-weight: 800;
+    color: #1a1a2e;
+}
+
+.spec-label {
+    font-size: 13px;
+    color: #9ca3af;
+}
+
+/* Property Sections */
+.property-section {
+    margin-bottom: 40px;
+    padding-bottom: 40px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.property-section h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0 0 20px 0;
+}
+
+.description p {
+    font-size: 15px;
+    line-height: 1.7;
+    color: #4b5563;
+    margin-bottom: 16px;
+}
+
+.description h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 24px 0 12px 0;
+}
+
+.description ul {
+    padding-left: 20px;
+}
+
+.description li {
+    font-size: 15px;
+    line-height: 1.8;
+    color: #4b5563;
+}
+
+.section-note {
+    font-size: 14px;
+    color: #6b7280;
+    margin-bottom: 20px;
+}
+
+.expectations-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.expectation {
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: 12px;
+}
+
+.exp-label {
+    display: block;
+    font-size: 12px;
+    color: #9ca3af;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.exp-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+
+/* Offers Table */
+.offers-table {
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.offer-row {
+    display: grid;
+    grid-template-columns: 60px 1fr 1fr 1fr 1.5fr;
+    padding: 14px 20px;
+    gap: 12px;
+    align-items: center;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    font-size: 14px;
+    color: #4b5563;
+}
+
+.offer-row:last-child {
+    border-bottom: none;
+}
+
+.offer-row.header {
+    background: #f8fafc;
+    font-weight: 600;
+    color: #9ca3af;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.offer-row.highlight {
+    background: rgba(16, 185, 129, 0.04);
+}
+
+.offer-num {
+    font-weight: 700;
+    color: #8b5cf6;
+}
+
+.condition {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+.condition.cash {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+}
+
+.condition.finance {
+    background: rgba(251, 191, 36, 0.1);
+    color: #d97706;
+}
+
+.condition.approved {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+}
+
+/* Offer Column */
+.offer-column {
+    position: sticky;
+    top: 80px;
+}
+
+.offer-card {
+    background: white;
+    border-radius: 20px;
+    padding: 32px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    margin-bottom: 24px;
+}
+
+.offer-card h2 {
+    font-size: 22px;
+    font-weight: 800;
+    color: #1a1a2e;
+    margin: 0 0 8px 0;
+}
+
+.offer-intro {
+    font-size: 14px;
+    color: #6b7280;
+    margin-bottom: 24px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #4b5563;
+    margin-bottom: 8px;
+}
+
+.price-input,
+.commission-input {
+    display: flex;
+    align-items: center;
+    border: 2px solid rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.currency,
+.percent {
+    padding: 12px 14px;
+    background: #f8fafc;
+    font-size: 15px;
+    font-weight: 600;
+    color: #6b7280;
+}
+
+.price-input input,
+.commission-input input {
+    flex: 1;
+    padding: 12px 14px;
+    border: none;
+    font-size: 15px;
+    font-family: inherit;
+    outline: none;
+}
+
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 2px solid rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
+    font-size: 15px;
+    font-family: inherit;
+    background: white;
+}
+
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #8b5cf6;
+}
+
+.form-group textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.input-hint {
+    font-size: 12px;
+    color: #10b981;
+    margin-top: 6px;
+    display: block;
+}
+
+.condition-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.condition-option {
+    display: flex;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 2px solid rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.condition-option:hover {
+    border-color: rgba(139, 92, 246, 0.3);
+}
+
+.condition-option.selected {
+    border-color: #8b5cf6;
+    background: rgba(139, 92, 246, 0.04);
+}
+
+.condition-option input {
+    accent-color: #8b5cf6;
+}
+
+.option-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.option-content strong {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a2e;
+}
+
+.option-content span {
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+.submit-offer-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 16px 24px;
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: inherit;
+    margin-top: 8px;
+}
+
+.submit-offer-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.35);
+}
+
+.btn-arrow {
+    font-size: 18px;
+    transition: transform 0.2s;
+}
+
+.submit-offer-btn:hover .btn-arrow {
+    transform: translateX(4px);
+}
+
+.offer-note {
+    font-size: 12px;
+    color: #9ca3af;
+    text-align: center;
+    margin-top: 16px;
+    line-height: 1.5;
+}
+
+/* Help Card */
+.help-card {
+    background: #f8fafc;
+    border-radius: 16px;
+    padding: 24px;
+    text-align: center;
+}
+
+.help-card h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0 0 8px 0;
+}
+
+.help-card p {
+    font-size: 14px;
+    color: #6b7280;
+    margin-bottom: 16px;
+}
+
+.help-btn {
+    padding: 10px 20px;
+    background: white;
+    border: 2px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.help-btn:hover {
+    border-color: #8b5cf6;
+    color: #8b5cf6;
+}
+
+/* Responsive */
+@@media (max-width: 1024px) {
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .offer-column {
+        position: static;
+    }
+}
+
+@@media (max-width: 768px) {
+    .nav-links {
+        display: none;
+    }
+    
+    .main-image img {
+        height: 280px;
+    }
+    
+    .property-specs {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .expectations-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .offer-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .offer-row.header {
+        display: none;
+    }
+}
+</style>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+    
+    private string _offerPrice = "";
+    private string _commission = "";
+    private string _settlement = "";
+    private string _condition = "cash";
+    private string _buyerType = "";
+    private string _notes = "";
+    
+    private void SubmitOffer()
+    {
+        // TODO: Implement offer submission
+        Navigation.NavigateTo("/agents/offer-submitted");
+    }
+    
+    private void SelectCashCondition()
+    {
+        _condition = "cash";
+    }
+    
+    private void SelectFinanceCondition()
+    {
+        _condition = "finance";
+    }
+    
+    private void SelectPreapprovedCondition()
+    {
+        _condition = "preapproved";
+    }
+}

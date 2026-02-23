@@ -1,0 +1,396 @@
+@page "/property/{Id:guid}"
+@using Aigents.Web.Services
+@using Aigents.Domain.Entities
+@inject IListingService ListingService
+@inject NavigationManager Navigation
+
+<PageTitle>@_listing?.Address | Premium Property</PageTitle>
+
+@if (_listing == null)
+{
+    <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading property details...</p>
+    </div>
+}
+else
+{
+    <div class="property-page">
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <div class="hero-content">
+                <span class="status-badge">@_listing.Status</span>
+                <h1>@_listing.Address</h1>
+                <p class="suburb">@_listing.Suburb, @_listing.State @_listing.Postcode</p>
+                <div class="price-tag">
+                    @_listing.PriceDisplay
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content-grid">
+            <!-- Left Column: Details -->
+            <div class="main-details">
+                <div class="key-features">
+                    <div class="feature">
+                        <span class="icon">🛏</span>
+                        <span class="value">@_listing.Bedrooms</span>
+                        <span class="label">Bed</span>
+                    </div>
+                    <div class="feature">
+                        <span class="icon">🛁</span>
+                        <span class="value">@_listing.Bathrooms</span>
+                        <span class="label">Bath</span>
+                    </div>
+                    <div class="feature">
+                        <span class="icon">🚗</span>
+                        <span class="value">@_listing.CarSpaces</span>
+                        <span class="label">Car</span>
+                    </div>
+                    <div class="feature">
+                        <span class="icon">📐</span>
+                        <span class="value">@(_listing.LandSize.HasValue ? _listing.LandSize + " m²" : "Large Block")</span>
+                        <span class="label">Land</span>
+                    </div>
+                </div>
+
+                <div class="description-section">
+                    <h2>About this property</h2>
+                    <p>@_listing.Description</p>
+                    
+                    <h3>Property Features</h3>
+                    <ul class="features-list">
+                        <li>Premium Location</li>
+                        <li>Modern Design</li>
+                        <li>Spacious Living Areas</li>
+                        <li>Close to Transport</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Right Column: Action Card -->
+            <div class="action-sidebar">
+                <div class="action-card">
+                    <h3>Interested?</h3>
+                    <p>Make an offer or enquire directly with the owner.</p>
+                    
+                    <button class="primary-btn pulse" @onclick="MakeOffer">
+                        Make an Offer
+                    </button>
+                    
+                    <button class="secondary-btn">
+                        Book Inspection
+                    </button>
+                    
+                    <div class="agent-profile">
+                        <div class="avatar">H</div>
+                        <div class="details">
+                            <span class="name">Direct to Homeowner</span>
+                            <span class="role">Managed by Aigents Platform</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Offer Modal -->
+        @if (_showOfferModal)
+        {
+            <div class="modal-backdrop">
+                <div class="modal-content">
+                    <h3>Make an Offer</h3>
+                    <p>Submit your offer to the owner.</p>
+                    
+                    <div class="form-group">
+                        <label>Your Offer Price ($)</label>
+                        <input type="number" @bind="_offerPrice" placeholder="e.g. 1200000" />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Your Name</label>
+                        <input type="text" @bind="_offerName" placeholder="John Doe" />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Message (Optional)</label>
+                        <textarea @bind="_offerMessage" placeholder="I love this property because..."></textarea>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button class="primary-btn" @onclick="SubmitOffer">Submit Offer</button>
+                        <button class="secondary-btn" @onclick="() => _showOfferModal = false">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<style>
+    .property-page {
+        font-family: 'Inter', sans-serif;
+        background: #f8fafc;
+        min-height: 100vh;
+    }
+
+    .hero-section {
+        background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.6)), url('/images/property-hero.jpg');
+        background-size: cover;
+        background-position: center;
+        height: 60vh;
+        display: flex;
+        align-items: flex-end;
+        padding: 40px;
+        color: white;
+    }
+
+    .hero-content {
+        max-width: 1200px;
+        width: 100%;
+        margin: 0 auto;
+    }
+
+    h1 {
+        font-size: 3rem;
+        font-weight: 800;
+        margin: 10px 0;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .suburb {
+        font-size: 1.5rem;
+        opacity: 0.9;
+    }
+
+    .status-badge {
+        background: #10b981;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+    }
+
+    .price-tag {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-top: 10px;
+    }
+
+    .content-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 40px;
+        max-width: 1200px;
+        margin: -60px auto 40px;
+        padding: 0 20px;
+        position: relative;
+    }
+
+    .main-details {
+        background: white;
+        padding: 30px;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    }
+
+    .key-features {
+        display: flex;
+        justify-content: space-between;
+        padding-bottom: 30px;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 30px;
+    }
+
+    .feature {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .feature .icon { font-size: 24px; }
+    .feature .value { font-weight: 700; font-size: 18px; color: #1f2937; }
+    .feature .label { font-size: 14px; color: #6b7280; }
+
+    .description-section h2, .description-section h3 {
+        color: #111827;
+        margin-top: 0;
+    }
+
+    .features-list {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .action-card {
+        background: white;
+        padding: 30px;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        position: sticky;
+        top: 20px;
+    }
+
+    .primary-btn {
+        width: 100%;
+        padding: 16px;
+        background: #10b981;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 16px;
+        cursor: pointer;
+        margin-bottom: 12px;
+        transition: transform 0.2s;
+    }
+
+    .primary-btn:hover {
+        background: #059669;
+        transform: translateY(-2px);
+    }
+
+    .secondary-btn {
+        width: 100%;
+        padding: 14px;
+        background: white;
+        color: #374151;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .agent-profile {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #f3f4f6;
+    }
+
+    .avatar {
+        width: 40px;
+        height: 40px;
+        background: #10b981;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+    }
+
+    .details {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .details .name { font-weight: 600; color: #1f2937; font-size: 14px; }
+    .details .role { color: #6b7280; font-size: 12px; }
+
+    /* Modal Styles */
+    .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .modal-content {
+        background: white;
+        padding: 30px;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 500px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .form-group input, .form-group textarea {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-family: inherit;
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 30px;
+    }
+
+    @@media (max-width: 768px) {
+        .content-grid {
+            grid-template-columns: 1fr;
+            margin-top: 0;
+        }
+        .hero-section {
+            height: 40vh;
+        }
+    }
+</style>
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private Listing? _listing;
+    private bool _showOfferModal = false;
+    private decimal? _offerPrice;
+    private string _offerName = "";
+    private string _offerMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _listing = await ListingService.GetListingAsync(Id);
+    }
+
+    private void MakeOffer()
+    {
+        _showOfferModal = true;
+    }
+
+    private async Task SubmitOffer()
+    {
+        if (_listing == null || !_offerPrice.HasValue) return;
+
+        // Create inquiry/offer
+        var inquiry = new ListingInquiry
+        {
+             Id = Guid.NewGuid(),
+             ListingId = _listing.Id,
+             Message = $"OFFER: ${_offerPrice:N0} - {_offerMessage} (by {_offerName})",
+             Status = InquiryStatus.OfferMade,
+             CreatedAt = DateTime.UtcNow,
+             Agent = new Aigents.Domain.Entities.Agent { Name = _offerName } // Hacky way to store sender name for now
+        };
+
+        _listing.Inquiries.Add(inquiry);
+        await ListingService.UpdateListingAsync(_listing);
+
+        _showOfferModal = false;
+        // Optionally show success message
+    }
+}

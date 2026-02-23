@@ -1,6 +1,6 @@
 @* ═══════════════════════════════════════════════════════════════
    CHAT COMPONENT
-   Main chat interface with AI agent
+   Main chat interface with AI agent + Property Report
 ═══════════════════════════════════════════════════════════════ *@
 
 @inject IHttpClientFactory HttpClientFactory
@@ -38,85 +38,117 @@
     </div>
 </header>
 
-@if (_showHandoff)
+@if (_reportData is not null)
 {
-    <div class="handoff-banner @(_mode)">
-        <div class="handoff-content">
-            <span class="handoff-icon">🤝</span>
-            <div class="handoff-text">
-                <span class="handoff-title">Ready for the next step?</span>
-                <span class="handoff-subtitle">Connect with a human agent</span>
-            </div>
-        </div>
-        <button class="handoff-btn @(_mode)" @onclick="HandleHandoff">Talk to Agent</button>
-    </div>
+    <PropertyReport 
+        ReportData="_reportData" 
+        OnUnlock="HandleUnlock"
+        OnChat="HandleChatAboutReport" />
 }
+else
+{
+    @if (_showHandoff)
+    {
+        <div class="handoff-banner @(_mode)">
+            <div class="handoff-content">
+                <span class="handoff-icon">🤝</span>
+                <div class="handoff-text">
+                    <span class="handoff-title">Ready for the next step?</span>
+                    <span class="handoff-subtitle">Connect with a human agent</span>
+                </div>
+            </div>
+            <button class="handoff-btn @(_mode)" @onclick="HandleHandoff">Talk to Agent</button>
+        </div>
+    }
 
-<div class="messages-area">
-    <div class="messages-inner">
-        @if (_messages.Count == 0)
-        {
-            <div class="welcome">
-                <div class="welcome-icon @(_mode)">✦</div>
-                <h2 class="welcome-title">Hi @(User?.Identity?.Name?.Split(' ')[0])! 👋</h2>
-                <p class="welcome-sub">How can I help you @_mode today?</p>
-                
-                <div class="suggestions">
-                    @foreach (var suggestion in GetSuggestions())
-                    {
-                        <button class="suggestion-btn" @onclick="() => SendMessage(suggestion.Label)">
-                            <span class="suggestion-icon @(_mode)">@suggestion.Icon</span>
-                            @suggestion.Label
-                        </button>
-                    }
+    <div class="messages-area">
+        <div class="messages-inner">
+            @if (_messages.Count == 0 && !_isLoading)
+            {
+                <div class="welcome">
+                    <div class="welcome-icon @(_mode)">✦</div>
+                    <h2 class="welcome-title">Hi @(User?.Identity?.Name?.Split(' ')[0])! 👋</h2>
+                    <p class="welcome-sub">How can I help you @_mode today?</p>
+                    
+                    <div class="suggestions">
+                        @foreach (var suggestion in GetSuggestions())
+                        {
+                            <button class="suggestion-btn" @onclick="() => SendMessage(suggestion.Label)">
+                                <span class="suggestion-icon @(_mode)">@suggestion.Icon</span>
+                                @suggestion.Label
+                            </button>
+                        }
+                    </div>
                 </div>
-            </div>
-        }
-        
-        @foreach (var msg in _messages)
-        {
-            <div class="msg-row @msg.Role">
-                <div class="msg @msg.Role @(msg.Role == "user" ? _mode : "")">
-                    @msg.Content
-                </div>
-            </div>
-        }
-        
-        @if (_isLoading)
-        {
-            <div class="msg-row assistant">
-                <div class="msg assistant">
-                    <div class="typing-dots">
+            }
+            
+            @if (_isLoading && _messages.Count == 0 && !string.IsNullOrEmpty(Address))
+            {
+                <div class="welcome">
+                    <div class="welcome-icon @(_mode)">⚡</div>
+                    <h2 class="welcome-title">Generating Report...</h2>
+                    <p class="welcome-sub">Analyzing market data for @Address</p>
+                    <div class="typing-dots" style="justify-content: center; margin-top: 20px;">
                         <span class="dot @(_mode)"></span>
                         <span class="dot @(_mode)"></span>
                         <span class="dot @(_mode)"></span>
                     </div>
                 </div>
-            </div>
-        }
-    </div>
-</div>
-
-<div class="input-area">
-    <div class="input-container">
-        <div class="input-inner">
-            <input @bind="_input" 
-                   @bind:event="oninput"
-                   @onkeypress="HandleKeyPress"
-                   placeholder="Message your AI agent..." 
-                   class="chat-input" />
-            <button class="send-btn @(_mode) @(string.IsNullOrWhiteSpace(_input) ? "disabled" : "")" 
-                    @onclick="() => SendMessage()"
-                    disabled="@(string.IsNullOrWhiteSpace(_input) || _isLoading)">
-                ↑
-            </button>
+            }
+            
+            @foreach (var msg in _messages)
+            {
+                <div class="msg-row @msg.Role">
+                    <div class="msg @msg.Role @(msg.Role == "user" ? _mode : "")">
+                        @msg.Content
+                    </div>
+                </div>
+            }
+            
+            @if (_isLoading && _messages.Count > 0)
+            {
+                <div class="msg-row assistant">
+                    <div class="msg assistant">
+                        <div class="typing-dots">
+                            <span class="dot @(_mode)"></span>
+                            <span class="dot @(_mode)"></span>
+                            <span class="dot @(_mode)"></span>
+                        </div>
+                    </div>
+                </div>
+            }
         </div>
     </div>
-</div>
+
+    <div class="input-area">
+        <div class="input-container">
+            <div class="input-inner">
+                <input @bind="_input" 
+                       @bind:event="oninput"
+                       @onkeypress="HandleKeyPress"
+                       placeholder="Message your AI agent..." 
+                       class="chat-input" />
+                <button class="send-btn @(_mode) @(string.IsNullOrWhiteSpace(_input) ? "disabled" : "")" 
+                        @onclick="() => SendMessage()"
+                        disabled="@(string.IsNullOrWhiteSpace(_input) || _isLoading)">
+                    ↑
+                </button>
+            </div>
+        </div>
+    </div>
+}
 
 @code {
     [Parameter]
     public System.Security.Claims.ClaimsPrincipal? User { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public string? Mode { get; set; }
+    
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public string? Address { get; set; }
 
     private string _mode = "buy";
     private string _input = "";
@@ -124,24 +156,61 @@
     private bool _showHandoff;
     private List<ChatMessage> _messages = new();
     private Guid? _conversationId;
+    
+    // Property Report Data
+    private PropertyReport.PropertyReportData? _reportData;
 
     private record ChatMessage(string Role, string Content);
     private record Suggestion(string Icon, string Label);
+    
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrEmpty(Mode))
+        {
+            _mode = Mode.ToLower() == "sell" ? "sell" : "buy";
+        }
+        
+        // Auto-generate report if address is present
+        if (_mode == "sell" && !string.IsNullOrEmpty(Address))
+        {
+            await GenerateReport(Address);
+        }
+    }
+    
+    private async Task GenerateReport(string address)
+    {
+        _isLoading = true;
+        try
+        {
+            var client = HttpClientFactory.CreateClient("api");
+            // Simulate AI thinking time if API is too fast
+            var report = await client.GetFromJsonAsync<PropertyReport.PropertyReportData>($"/api/listings/report?address={Uri.EscapeDataString(address)}");
+            _reportData = report;
+        }
+        catch (Exception ex)
+        {
+            _messages.Add(new ChatMessage("assistant", $"I couldn't generate a report for that address. Error: {ex.Message}"));
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
 
     private List<Suggestion> GetSuggestions() => _mode == "buy" 
         ? new List<Suggestion>
         {
             new("🔍", "Off-market in Paddington"),
-            new("🏠", "Under $1.2M in Bulimba"),
+            new("🏠", "Under $1.7M in Bulimba"),
             new("📍", "Best Gold Coast suburbs"),
             new("📈", "High-growth areas")
         }
         : new List<Suggestion>
         {
-            new("👥", "Find sellers in Burleigh"),
-            new("💰", "Market values in New Farm"),
-            new("📧", "Create outreach campaign"),
-            new("🔍", "Withdrawn listings")
+            new("💰", "How much is my home worth?"),
+            new("📊", "Suburbs report"),
+            new("🏘️", "Comparable sales"),
+            new("✨", "Create listing description")
         };
 
     private async Task HandleKeyPress(KeyboardEventArgs e)
@@ -160,6 +229,18 @@
         _input = "";
         _messages.Add(new ChatMessage("user", text));
         _isLoading = true;
+        
+        // If report is showing, we might want to hide it or keep it above?
+        // For now, let's switch back to chat view if they type, implying they want to discuss
+        if (_reportData != null)
+        {
+             // Optional: Clear report to show chat history? 
+             // Or maybe we treat the report as the "context" and just show chat below?
+             // For this design, let's hide report and show it in history or just switch views.
+             // But simpler: just null it to go back to chat flow
+             _reportData = null;
+        }
+        
         StateHasChanged();
 
         try
@@ -203,13 +284,34 @@
 
     private void HandleBack()
     {
-        Navigation.NavigateTo("/logout", forceLoad: true);
+        if (_reportData != null)
+        {
+            // If viewing report, go back to home
+            Navigation.NavigateTo("/");
+        }
+        else
+        {
+            Navigation.NavigateTo("/");
+        }
+    }
+    
+    private void HandleUnlock()
+    {
+        // Placeholder for future auth flow
+        _reportData = null; // Hide report
+        _messages.Add(new ChatMessage("assistant", "Great! I've saved this property to your profile. Let's get it ready for sale. What's your target timeframe?"));
+    }
+    
+    private void HandleChatAboutReport()
+    {
+        _reportData = null; // Hide report
+        _messages.Add(new ChatMessage("assistant", "What would you like to know about the report? I can explain the valuation or the comparable sales."));
     }
 
     private async Task HandleHandoff()
     {
         // TODO: Call handoff API
-        // For now, just show alert
+        await Task.CompletedTask;
     }
 
     private void SetModeBuy() => _mode = "buy";

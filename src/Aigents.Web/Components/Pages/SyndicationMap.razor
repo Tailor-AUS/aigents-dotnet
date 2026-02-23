@@ -1,0 +1,291 @@
+@using Aigents.Domain.Entities
+@inject IJSRuntime JSRuntime
+
+<div class="syndication-map-container">
+    <div id="syndication-map" style="width: 100%; height: 500px; border-radius: 16px; z-index: 1;"></div>
+    
+    <div class="map-stats-overlay">
+        <div class="stat-item">
+            <span class="stat-value">1.5B</span>
+            <span class="stat-label">Global Reach</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-value">16</span>
+            <span class="stat-label">Active Markets</span>
+        </div>
+    </div>
+    
+    @if (_selectedRegion != null)
+    {
+        <div class="region-detail-panel">
+            <div class="panel-header">
+                <div>
+                     <h4>@_selectedRegion.Name</h4>
+                     @if (!string.IsNullOrEmpty(_selectedRegion.MigrantStat)) {
+                         <span class="migrant-stat">👥 @_selectedRegion.MigrantStat</span>
+                     }
+                </div>
+                <button class="close-btn" @onclick="ClosePanel">×</button>
+            </div>
+            
+            <div class="platform-list">
+                @foreach (var platform in _regionPlatforms)
+                {
+                    <div class="platform-item @(platform.IsPaid && platform.Status == "Pending" ? "premium-highlight" : "")">
+                        <div class="platform-main">
+                            <span class="p-icon">@platform.Icon</span>
+                            <div class="p-info">
+                                <span class="p-name">@platform.Name</span>
+                                @if (platform.IsPaid && platform.Status == "Pending")
+                                {
+                                    <span class="p-cost">@platform.Cost</span>
+                                }
+                            </div>
+                        </div>
+                        <div class="platform-actions">
+                           @if (platform.IsPaid && platform.Status == "Pending")
+                           {
+                               <button class="pay-btn">Activate Now</button>
+                           }
+                           else
+                           {
+                               <span class="p-status @platform.StatusClass">@platform.Status</span>
+                           }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .syndication-map-container {
+        position: relative;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .map-stats-overlay {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        display: flex;
+        gap: 20px;
+        background: white;
+        padding: 12px 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        z-index: 1000;
+    }
+    
+    .stat-item {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .stat-value {
+        font-size: 18px;
+        font-weight: 800;
+        color: #111827;
+    }
+    
+    .stat-label {
+        font-size: 10px;
+        text-transform: uppercase;
+        font-weight: 600;
+        color: #6b7280;
+    }
+    
+    .migrant-stat {
+        display: block;
+        font-size: 11px;
+        color: #059669;
+        margin-top: 2px;
+        font-weight: 600;
+        background: #ecfdf5;
+        padding: 2px 6px;
+        border-radius: 4px;
+        width: fit-content;
+    }
+
+    .region-detail-panel {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 340px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        z-index: 1001;
+        overflow: hidden;
+        animation: slideIn 0.2s ease-out;
+    }
+    
+    .panel-header {
+        padding: 16px;
+        border-bottom: 1px solid #f3f4f6;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        background: #f9fafb;
+    }
+    
+    .panel-header h4 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 700;
+        color: #111827;
+    }
+    
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 20px;
+        color: #9ca3af;
+        cursor: pointer;
+        padding: 0;
+        line-height: 1;
+    }
+    
+    .platform-list {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .platform-item {
+        padding: 12px 16px;
+        border-bottom: 1px solid #f3f4f6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .platform-item.premium-highlight {
+        background: #fffbeb;
+    }
+    
+    .platform-main {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .p-icon { font-size: 20px; }
+    
+    .p-info {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .p-name {
+        font-weight: 600;
+        font-size: 14px;
+        color: #374151;
+    }
+    
+    .p-cost {
+        font-size: 11px;
+        color: #d97706;
+        font-weight: 500;
+    }
+    
+    .platform-actions {
+        display: flex;
+        align-items: center;
+    }
+    
+    .pay-btn {
+        background: #059669;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    
+    .pay-btn:hover {
+        background: #047857;
+    }
+    
+    .p-status {
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 10px;
+    }
+    
+    .p-status.live { background: #dcfce7; color: #059669; }
+    .p-status.pending { background: #f3f4f6; color: #6b7280; }
+    
+    @@keyframes slideIn {
+        from { transform: translateX(10px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+</style>
+
+@code {
+    private RegionModel? _selectedRegion;
+    private List<PlatformViewModel> _regionPlatforms = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("syndicationMap.init", "syndication-map", DotNetObjectReference.Create(this));
+        }
+    }
+
+    [JSInvokable]
+    public void OnRegionClick(string regionName)
+    {
+        _selectedRegion = GetRegionDetails(regionName);
+        _regionPlatforms = GetPlatformsForRegion(regionName);
+        StateHasChanged();
+    }
+    
+    private void ClosePanel()
+    {
+        _selectedRegion = null;
+    }
+    
+    private RegionModel GetRegionDetails(string region) => region switch
+    {
+        "Australia" => new("Australia (National)", "Home Market"),
+        "China" => new("China", "High Interest: 30% of new queries"),
+        "USA" => new("USA", "Moderate Interest: Expat Buyers"),
+        "UK" => new("UK / Europe", "Low Interest"),
+        _ => new(region, "")
+    };
+
+    private List<PlatformViewModel> GetPlatformsForRegion(string region)
+    {
+        return region switch
+        {
+            "Australia" => new()
+            {
+                new("realestate.com.au", "🏡", "Live", "live", null, false),
+                new("Domain", "🏠", "Pending", "pending", "$199 to Activate", true),
+                new("Homely", "🏠", "Listed", "live", null, false),
+                new("Soho", "📱", "Listed", "live", null, false)
+            },
+            "China" => new()
+            {
+                 new("Juwai", "🌏", "Listed", "live", null, false),
+                 new("Fang.com", "🏘️", "Pending", "pending", "$499 to Activate", true)
+            },
+            "USA" => new() { new("Zillow", "🏠", "Listed", "live", null, false) },
+            "UK" => new() { new("Rightmove", "🇬🇧", "Pending", "pending", "£150 to Activate", true) },
+            _ => new()
+        };
+    }
+
+    public record RegionModel(string Name, string MigrantStat);
+    public record PlatformViewModel(string Name, string Icon, string Status, string StatusClass, string? Cost, bool IsPaid);
+}

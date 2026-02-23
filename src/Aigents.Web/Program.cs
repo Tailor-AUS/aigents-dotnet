@@ -2,7 +2,9 @@
 // AIGENTS WEB - BLAZOR FRONTEND
 // ═══════════════════════════════════════════════════════════════
 
+using Aigents.Infrastructure.Data;
 using Aigents.Web.Components;
+using Aigents.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +13,15 @@ var builder = WebApplication.CreateBuilder(args);
 // ───────────────────────────────────────────────────────────────
 
 builder.AddServiceDefaults();
+
+// Force static web assets to load (crucial for scoped CSS and JS when running via Aspire/dotnet run)
+builder.WebHost.UseStaticWebAssets();
+
+// ───────────────────────────────────────────────────────────────
+// DATABASE (AZURE SQL VIA ASPIRE)
+// ───────────────────────────────────────────────────────────────
+
+builder.AddSqlServerDbContext<AigentsDbContext>("aigentsdb");
 
 // ───────────────────────────────────────────────────────────────
 // BLAZOR
@@ -32,6 +43,28 @@ builder.AddRedisOutputCache("redis");
 builder.Services.AddHttpClient("api", client =>
 {
     client.BaseAddress = new Uri("https+http://api");
+});
+
+// Default HttpClient for Blazor components (used by CreateListing wizard)
+builder.Services.AddScoped(sp => 
+{
+    var factory = sp.GetRequiredService<IHttpClientFactory>();
+    return factory.CreateClient("api");
+});
+
+// ───────────────────────────────────────────────────────────────
+// DOMAIN SERVICES
+// ───────────────────────────────────────────────────────────────
+
+// Database-backed listing service (Scoped for EF Core compatibility)
+builder.Services.AddScoped<IListingService, ListingService>();
+
+// Web Intelligence Service (Scrapes/Searches for property data)
+builder.Services.AddHttpClient<Aigents.Infrastructure.PropertyData.IPropertyIntelligenceService, Aigents.Infrastructure.PropertyData.PropertyIntelligenceService>(client =>
+{
+    // In a real scenario, this might point to a specific scraper service or use a proxy
+    client.Timeout = TimeSpan.FromSeconds(30);
+    // client.BaseAddress = ... 
 });
 
 // ───────────────────────────────────────────────────────────────
@@ -59,6 +92,8 @@ if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientS
     builder.Services.AddCascadingAuthenticationState();
 }
 
+builder.Services.AddScoped<ISiteContext, SiteContext>();
+
 var app = builder.Build();
 
 // ───────────────────────────────────────────────────────────────
@@ -67,7 +102,7 @@ var app = builder.Build();
 
 // Note: HTTPS redirect disabled for local Aspire development
 // Enable in production with proper HTTPS configuration
-app.UseStaticFiles();
+app.MapStaticAssets();
 app.UseAntiforgery();
 app.UseOutputCache();
 

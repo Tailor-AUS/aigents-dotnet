@@ -1,21 +1,20 @@
 @page "/"
+@page "/buy"
+@page "/sell"
+@page "/rent"
+@page "/agent"
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
-@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.Web
-@inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Navigation
 
-<PageTitle>Aigents - AI Real Estate Agent</PageTitle>
+<PageTitle>Aigents - Australia's Open Listing Marketplace</PageTitle>
 
-@* Show Hero for now - authentication can be enabled later *@
+@* Show Hero - Subdomain Routing handled by Hero component *@
 <Hero OnGetStarted="HandleGetStarted" />
 
 @code {
-    private string _mode = "buy";
-
-    private void HandleGetStarted()
+    private void HandleGetStarted(string mode)
     {
-        // For now, go directly to chat without auth
-        Navigation.NavigateTo("/chat", forceLoad: false);
+        Navigation.NavigateTo($"/chat?mode={mode}", forceLoad: false);
     }
 }

@@ -1,0 +1,585 @@
+@page "/agents/listings"
+@page "/agents/browse"
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@using Microsoft.AspNetCore.Components.Web
+@inject NavigationManager Navigation
+
+<PageTitle>Browse Open Listings | aigents Agent Portal</PageTitle>
+
+<div class="browse-wrapper">
+    @* Navigation *@
+    <nav class="browse-nav">
+        <div class="nav-container">
+            <a href="/agents" class="logo">
+                <span class="logo-mark">◆</span>
+                <span class="logo-text">aigents</span>
+                <span class="portal-badge">Agent Portal</span>
+            </a>
+            <div class="nav-links">
+                <a href="/agents/browse" class="nav-link active">Browse Listings</a>
+                <a href="/agents/my-offers" class="nav-link">My Offers</a>
+                <a href="/agents/settings" class="nav-link">Settings</a>
+                <div class="user-menu">
+                    <span class="user-avatar">JS</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    @* Main Content *@
+    <main class="browse-main">
+        @* Filters Bar *@
+        <div class="filters-bar">
+            <div class="filters-left">
+                <h1>Open Listings</h1>
+                <span class="listing-count">@_mockListings.Count available</span>
+            </div>
+            <div class="filters-right">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" placeholder="Search by suburb or address" @bind="_searchQuery" @bind:event="oninput" />
+                </div>
+                <div class="filter-dropdown">
+                    <select @bind="_priceFilter">
+                        <option value="">All Prices</option>
+                        <option value="under500">Under $500K</option>
+                        <option value="500to1m">$500K - $1M</option>
+                        <option value="1mto2m">$1M - $2M</option>
+                        <option value="over2m">$2M+</option>
+                    </select>
+                </div>
+                <div class="filter-dropdown">
+                    <select @bind="_stateFilter">
+                        <option value="">All States</option>
+                        <option value="QLD">Queensland</option>
+                        <option value="NSW">New South Wales</option>
+                        <option value="VIC">Victoria</option>
+                        <option value="WA">Western Australia</option>
+                        <option value="SA">South Australia</option>
+                    </select>
+                </div>
+                <div class="sort-dropdown">
+                    <select @bind="_sortBy">
+                        <option value="newest">Newest First</option>
+                        <option value="price-low">Price: Low to High</option>
+                        <option value="price-high">Price: High to Low</option>
+                        <option value="offers">Most Offers</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        @* Listings Grid *@
+        <div class="listings-grid">
+            @foreach (var listing in GetFilteredListings())
+            {
+                <div class="listing-card" @onclick="() => ViewListing(listing.Id)">
+                    <div class="card-image">
+                        <div class="image-placeholder" style="background: @listing.ImageColor;"></div>
+                        @if (listing.IsNew)
+                        {
+                            <span class="card-badge new">New</span>
+                        }
+                        @if (listing.IsHot)
+                        {
+                            <span class="card-badge hot">🔥 Hot</span>
+                        }
+                        <button class="save-btn" @onclick:stopPropagation="true" @onclick="() => ToggleSave(listing.Id)">
+                            @(listing.IsSaved ? "♥" : "♡")
+                        </button>
+                    </div>
+                    <div class="card-content">
+                        <div class="card-header">
+                            <h3>@listing.Address</h3>
+                            <span class="card-suburb">@listing.Suburb, @listing.State</span>
+                        </div>
+                        <div class="card-details">
+                            <span>🛏 @listing.Beds</span>
+                            <span>🛁 @listing.Baths</span>
+                            <span>🚗 @listing.Cars</span>
+                            <span>📐 @listing.LandSize</span>
+                        </div>
+                        <div class="card-footer">
+                            <div class="price-guide">
+                                <span class="label">Guide</span>
+                                <span class="price">@listing.PriceGuide</span>
+                            </div>
+                            <div class="offer-status">
+                                <span class="offer-dot @(listing.OfferCount > 0 ? "active" : "")"></span>
+                                <span>@listing.OfferCount offer@(listing.OfferCount != 1 ? "s" : "")</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+        
+        @* Load More *@
+        <div class="load-more">
+            <button class="load-more-btn">Load More Listings</button>
+        </div>
+    </main>
+</div>
+
+<style>
+@@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+.browse-wrapper {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f8fafc;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
+
+.browse-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: white;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.nav-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+}
+
+.logo-mark {
+    font-size: 20px;
+    color: #8b5cf6;
+}
+
+.logo-text {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+
+.portal-badge {
+    font-size: 11px;
+    font-weight: 600;
+    color: #8b5cf6;
+    background: rgba(139, 92, 246, 0.1);
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-left: 8px;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.nav-link {
+    font-size: 14px;
+    font-weight: 500;
+    color: #6b7280;
+    text-decoration: none;
+    padding: 8px 0;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.nav-link:hover {
+    color: #1a1a2e;
+}
+
+.nav-link.active {
+    color: #8b5cf6;
+    border-bottom-color: #8b5cf6;
+}
+
+.user-menu {
+    margin-left: 16px;
+}
+
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.browse-main {
+    padding: 80px 24px 60px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.filters-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+    padding: 20px 0;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.filters-left {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+}
+
+.filters-left h1 {
+    font-size: 28px;
+    font-weight: 800;
+    color: #1a1a2e;
+    margin: 0;
+}
+
+.listing-count {
+    font-size: 14px;
+    color: #8b5cf6;
+    font-weight: 600;
+    background: rgba(139, 92, 246, 0.1);
+    padding: 4px 12px;
+    border-radius: 20px;
+}
+
+.filters-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
+    min-width: 260px;
+}
+
+.search-icon {
+    font-size: 14px;
+}
+
+.search-box input {
+    border: none;
+    outline: none;
+    font-size: 14px;
+    font-family: inherit;
+    width: 100%;
+    background: transparent;
+}
+
+.filter-dropdown select,
+.sort-dropdown select {
+    padding: 10px 16px;
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: inherit;
+    color: #4b5563;
+    cursor: pointer;
+    min-width: 140px;
+}
+
+.filter-dropdown select:focus,
+.sort-dropdown select:focus {
+    outline: none;
+    border-color: #8b5cf6;
+}
+
+/* Listings Grid */
+.listings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+}
+
+.listing-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.listing-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+}
+
+.card-image {
+    position: relative;
+    height: 200px;
+}
+
+.image-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+}
+
+.card-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.card-badge.new {
+    background: #10b981;
+    color: white;
+}
+
+.card-badge.hot {
+    background: #f97316;
+    color: white;
+}
+
+.save-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+    background: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s;
+}
+
+.save-btn:hover {
+    transform: scale(1.1);
+    color: #ef4444;
+}
+
+.card-content {
+    padding: 20px;
+}
+
+.card-header h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0 0 4px 0;
+    line-height: 1.3;
+}
+
+.card-suburb {
+    font-size: 13px;
+    color: #9ca3af;
+}
+
+.card-details {
+    display: flex;
+    gap: 16px;
+    margin: 16px 0;
+    padding: 12px 0;
+    border-top: 1px solid rgba(0, 0, 0, 0.04);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.card-details span {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.price-guide .label {
+    font-size: 11px;
+    color: #9ca3af;
+    text-transform: uppercase;
+    display: block;
+}
+
+.price-guide .price {
+    font-size: 20px;
+    font-weight: 800;
+    color: #1a1a2e;
+}
+
+.offer-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.offer-dot {
+    width: 8px;
+    height: 8px;
+    background: #d1d5db;
+    border-radius: 50%;
+}
+
+.offer-dot.active {
+    background: #10b981;
+    animation: pulse 2s infinite;
+}
+
+@@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Load More */
+.load-more {
+    text-align: center;
+    padding: 48px 0;
+}
+
+.load-more-btn {
+    padding: 14px 32px;
+    background: white;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1a1a2e;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.load-more-btn:hover {
+    border-color: #8b5cf6;
+    color: #8b5cf6;
+}
+
+/* Responsive */
+@@media (max-width: 768px) {
+    .nav-links {
+        display: none;
+    }
+    
+    .filters-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .filters-right {
+        flex-direction: column;
+    }
+    
+    .search-box {
+        min-width: 100%;
+    }
+    
+    .filter-dropdown select,
+    .sort-dropdown select {
+        width: 100%;
+    }
+    
+    .listings-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+@code {
+    private string _searchQuery = "";
+    private string _priceFilter = "";
+    private string _stateFilter = "";
+    private string _sortBy = "newest";
+    
+    private List<ListingModel> _mockListings = new()
+    {
+        new() { Id = 1, Address = "67 Northview Outlook", Suburb = "Brisbane", State = "QLD", Beds = 4, Baths = 2, Cars = 2, LandSize = "650m²", PriceGuide = "$1.2M", OfferCount = 3, IsNew = false, IsHot = true, ImageColor = "linear-gradient(135deg, #a78bfa, #8b5cf6)" },
+        new() { Id = 2, Address = "42 Ocean View Drive", Suburb = "Byron Bay", State = "NSW", Beds = 5, Baths = 3, Cars = 2, LandSize = "1,200m²", PriceGuide = "$2.8M", OfferCount = 2, IsNew = true, IsHot = false, ImageColor = "linear-gradient(135deg, #60a5fa, #3b82f6)" },
+        new() { Id = 3, Address = "18 Teneriffe Drive", Suburb = "Brisbane", State = "QLD", Beds = 3, Baths = 2, Cars = 1, LandSize = "450m²", PriceGuide = "$1.4M", OfferCount = 5, IsNew = false, IsHot = true, ImageColor = "linear-gradient(135deg, #34d399, #10b981)" },
+        new() { Id = 4, Address = "156 St Kilda Road", Suburb = "Melbourne", State = "VIC", Beds = 2, Baths = 2, Cars = 1, LandSize = "N/A", PriceGuide = "$890K", OfferCount = 1, IsNew = true, IsHot = false, ImageColor = "linear-gradient(135deg, #f472b6, #ec4899)" },
+        new() { Id = 5, Address = "88 Cottesloe Beach Road", Suburb = "Perth", State = "WA", Beds = 4, Baths = 3, Cars = 2, LandSize = "890m²", PriceGuide = "$3.2M", OfferCount = 0, IsNew = true, IsHot = false, ImageColor = "linear-gradient(135deg, #fbbf24, #f59e0b)" },
+        new() { Id = 6, Address = "23 Rosalie Terrace", Suburb = "Paddington", State = "QLD", Beds = 3, Baths = 2, Cars = 2, LandSize = "405m²", PriceGuide = "$1.65M", OfferCount = 4, IsNew = false, IsHot = true, ImageColor = "linear-gradient(135deg, #c084fc, #a855f7)" },
+        new() { Id = 7, Address = "9 Circular Quay", Suburb = "Sydney", State = "NSW", Beds = 2, Baths = 1, Cars = 1, LandSize = "N/A", PriceGuide = "$1.1M", OfferCount = 2, IsNew = false, IsHot = false, ImageColor = "linear-gradient(135deg, #4ade80, #22c55e)" },
+        new() { Id = 8, Address = "77 Gold Coast Highway", Suburb = "Surfers Paradise", State = "QLD", Beds = 3, Baths = 2, Cars = 2, LandSize = "320m²", PriceGuide = "$950K", OfferCount = 6, IsNew = false, IsHot = true, ImageColor = "linear-gradient(135deg, #f87171, #ef4444)" },
+    };
+    
+    private List<ListingModel> GetFilteredListings()
+    {
+        var listings = _mockListings.AsEnumerable();
+        
+        if (!string.IsNullOrWhiteSpace(_searchQuery))
+        {
+            listings = listings.Where(l => 
+                l.Address.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                l.Suburb.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase));
+        }
+        
+        if (!string.IsNullOrEmpty(_stateFilter))
+        {
+            listings = listings.Where(l => l.State == _stateFilter);
+        }
+        
+        return listings.ToList();
+    }
+    
+    private void ViewListing(int id)
+    {
+        Navigation.NavigateTo($"/agents/listing/{id}");
+    }
+    
+    private void ToggleSave(int id)
+    {
+        var listing = _mockListings.FirstOrDefault(l => l.Id == id);
+        if (listing != null)
+        {
+            listing.IsSaved = !listing.IsSaved;
+        }
+    }
+    
+    private class ListingModel
+    {
+        public int Id { get; set; }
+        public string Address { get; set; } = "";
+        public string Suburb { get; set; } = "";
+        public string State { get; set; } = "";
+        public int Beds { get; set; }
+        public int Baths { get; set; }
+        public int Cars { get; set; }
+        public string LandSize { get; set; } = "";
+        public string PriceGuide { get; set; } = "";
+        public int OfferCount { get; set; }
+        public bool IsNew { get; set; }
+        public bool IsHot { get; set; }
+        public bool IsSaved { get; set; }
+        public string ImageColor { get; set; } = "";
+    }
+}

@@ -1,0 +1,402 @@
+/* ═══════════════════════════════════════════════════════════════
+   AIGENTS PREMIUM THEME
+   Super Cool Visuals & Animations
+═══════════════════════════════════════════════════════════════ */
+
+:root {
+    --buy-primary: #10b981;
+    --buy-light: #6ee7b7;
+    --sell-primary: #f59e0b;
+    --sell-light: #fcd34d;
+    --bg-dark: #1a1a1a;
+}
+
+/* Dynamic Background Grid - Soft for light theme */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(0, 0, 0, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.02) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: -1;
+    mask-image: radial-gradient(circle at center, black, transparent 80%);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   HERO SECTION
+═══════════════════════════════════════════════════════════════ */
+
+.hero-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    width: 100%;
+    position: relative;
+    z-index: 10;
+}
+
+.hero-title {
+    font-size: clamp(48px, 8vw, 84px);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.04em;
+    margin-bottom: 40px;
+    text-align: center;
+    color: #1a1a2e;
+
+    /* Animated Gradient for light theme */
+    background: linear-gradient(135deg, #1a1a2e 0%, #4a5568 50%, #1a1a2e 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shine 5s linear infinite;
+}
+
+
+@keyframes shine {
+    to {
+        background-position: 200% center;
+    }
+}
+
+.highlight {
+    position: relative;
+    display: inline-block;
+    -webkit-text-fill-color: initial;
+}
+
+.highlight.buy {
+    color: var(--buy-primary);
+}
+
+.highlight.sell {
+    color: var(--sell-primary);
+}
+
+/* Builder Card with Glassmorphism */
+.agent-builder-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 32px;
+    padding: 32px;
+    box-shadow:
+        0 20px 40px rgba(0, 0, 0, 0.08),
+        0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+    width: 100%;
+    max-width: 500px;
+    margin-top: 20px;
+    animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+@keyframes slideUpFade {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Inputs & Buttons */
+.builder-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.builder-label {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: rgba(0, 0, 0, 0.4);
+    text-transform: uppercase;
+}
+
+.builder-step label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 8px;
+}
+
+.builder-input {
+    width: 100%;
+    padding: 16px 16px 16px 48px;
+    border-radius: 16px;
+    border: 2px solid #f0f0f0;
+    font-size: 16px;
+    color: #1a1a1a;
+    background: #fafafa;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.builder-input:focus {
+    border-color: #1a1a1a;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.05);
+}
+
+.input-with-icon {
+    position: relative;
+}
+
+.search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    pointer-events: none;
+}
+
+/* Time Pills */
+.timeframe-selector {
+    display: flex;
+    gap: 8px;
+}
+
+.time-pill {
+    flex: 1;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #f0f0f0;
+    background: white;
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(0, 0, 0, 0.6);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.time-pill.active {
+    background: #1a1a1a;
+    color: white;
+    border-color: #1a1a1a;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Mode Pills */
+.mode-toggles-inline {
+    background: #f5f5f5;
+    padding: 4px;
+    border-radius: 100px;
+    display: flex;
+}
+
+.mode-pill {
+    padding: 6px 16px;
+    border-radius: 100px;
+    border: none;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    background: transparent;
+    color: rgba(0, 0, 0, 0.5);
+}
+
+.mode-pill.active {
+    background: white;
+    color: #1a1a1a;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+/* Main Button */
+.build-btn {
+    width: 100%;
+    padding: 18px;
+    margin-top: 24px;
+    border-radius: 16px;
+    border: none;
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.build-btn.buy {
+    background: var(--buy-primary);
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.25);
+}
+
+.build-btn.sell {
+    background: var(--sell-primary);
+    box-shadow: 0 8px 24px rgba(245, 158, 11, 0.25);
+}
+
+.build-btn:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.05);
+}
+
+.builder-subtext {
+    margin-top: 24px;
+    font-size: 13px;
+    color: rgba(0, 0, 0, 0.4);
+    font-weight: 500;
+    text-align: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ORBS & ANIMATIONS - Light Theme
+═══════════════════════════════════════════════════════════════ */
+
+.orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.25;
+    z-index: 0;
+    transition: background 0.5s ease;
+    animation: floatOrb 10s ease-in-out infinite alternate;
+}
+
+.orb-1 {
+    width: 400px;
+    height: 400px;
+    top: -100px;
+    left: -100px;
+}
+
+.orb-2 {
+    width: 300px;
+    height: 300px;
+    bottom: 0;
+    right: 0;
+}
+
+.orb-buy {
+    background: radial-gradient(circle at center, #6ee7b7, #10b981);
+}
+
+.orb-sell {
+    background: radial-gradient(circle at center, #fcd34d, #f59e0b);
+}
+
+@keyframes floatOrb {
+    0% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    50% {
+        transform: translate(30px, -30px) scale(1.1);
+    }
+
+    100% {
+        transform: translate(-30px, 30px) scale(0.9);
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   EXPLORE PAGE
+═══════════════════════════════════════════════════════════════ */
+
+.explore-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    background: white;
+}
+
+.explore-header {
+    height: 80px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    background: white;
+}
+
+.explore-content {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.listings-panel {
+    width: 60%;
+    overflow-y: auto;
+    padding: 24px;
+    border-right: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.listings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+}
+
+.listing-card {
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.listing-card:hover {
+    transform: translateY(-4px);
+}
+
+.card-image {
+    height: 200px;
+    background: #f0f0f0;
+    border-radius: 16px;
+    margin-bottom: 12px;
+    position: relative;
+    /* Placeholder pattern */
+    background-image: linear-gradient(45deg, #f0f0f0 25%, #e6e6e6 25%, #e6e6e6 50%, #f0f0f0 50%, #f0f0f0 75%, #e6e6e6 75%, #e6e6e6 100%);
+    background-size: 40px 40px;
+}
+
+.card-top .price {
+    font-size: 18px;
+    font-weight: 800;
+    color: #1a1a1a;
+}
+
+.features {
+    font-size: 13px;
+    color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    gap: 12px;
+    margin: 4px 0;
+}
+
+.ai-insight {
+    margin-top: 8px;
+    font-size: 11px;
+    background: #ecfdf5;
+    color: #047857;
+    padding: 8px;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+.map-panel {
+    flex: 1;
+    background: #e5e7eb;
+    position: relative;
+}

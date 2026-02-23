@@ -214,3 +214,4 @@ echo "  3. After deployment, configure DNS for aigents.au"
 echo ""
 
 
+

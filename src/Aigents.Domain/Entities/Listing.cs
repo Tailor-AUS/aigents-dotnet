@@ -41,6 +41,11 @@ public class Listing
     public DateTime? AgreementSignedAt { get; set; }
     public string? AgreementSignature { get; set; } // Base64 or name
     
+    // Listing Mode (Open to all agents vs Exclusive to one)
+    public ListingMode Mode { get; set; } = ListingMode.Open;
+    public Guid? ExclusiveAgentId { get; set; }
+    public Agent? ExclusiveAgent { get; set; }
+    
     // Distribution
     public bool DistributedToAgents { get; set; }
     public DateTime? DistributedAt { get; set; }
@@ -54,6 +59,16 @@ public class Listing
     // Navigation
     public User User { get; set; } = null!;
     public ICollection<ListingInquiry> Inquiries { get; set; } = new List<ListingInquiry>();
+    public ICollection<SyndicationStatus> SyndicationStatuses { get; set; } = new List<SyndicationStatus>();
+}
+
+/// <summary>
+/// Determines if listing is open to all agents or exclusive to one
+/// </summary>
+public enum ListingMode
+{
+    Open,      // Available to all agents
+    Exclusive  // Appointed single agent
 }
 
 public enum ListingStatus

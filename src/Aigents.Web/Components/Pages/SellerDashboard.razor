@@ -1,0 +1,1373 @@
+@page "/my-listings"
+@page "/seller/dashboard"
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@using Microsoft.AspNetCore.Components.Web
+@using Aigents.Domain.Entities
+@using System.Threading
+@implements IDisposable
+@inject NavigationManager Navigation
+@using Aigents.Web.Services
+@inject IListingService ListingService
+
+<PageTitle>My Listings | aigents</PageTitle>
+
+<div class="dashboard-wrapper">
+    @* Navigation *@
+    <nav class="dash-nav">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <span class="logo-mark">◆</span>
+                <span class="logo-text">aigents</span>
+            </a>
+            <div class="nav-links">
+                <a href="/my-listings" class="nav-link active">My Listings</a>
+                <a href="/my-offers" class="nav-link">Offers</a>
+                <a href="/settings" class="nav-link">Settings</a>
+                <div class="user-menu">
+                    <span class="user-avatar">KH</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    @* Main Content *@
+    <main class="dash-main">
+        <div class="dash-header">
+            <div class="header-left">
+                <h1>My Listings</h1>
+                <p>Manage your properties and review offers</p>
+            </div>
+            <button class="add-listing-btn" @onclick="CreateListing">
+                + New Listing
+            </button>
+        </div>
+        
+        @* Stats Cards *@
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-icon">🏠</span>
+                <div class="stat-content">
+                    <span class="stat-value">1</span>
+                    <span class="stat-label">Active Listings</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-icon">📊</span>
+                <div class="stat-content">
+                    <span class="stat-value">3</span>
+                    <span class="stat-label">Total Offers</span>
+                </div>
+            </div>
+            <div class="stat-card highlight">
+                <span class="stat-icon">🔥</span>
+                <div class="stat-content">
+                    <span class="stat-value">$1.18M</span>
+                    <span class="stat-label">Best Offer</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-icon">👁️</span>
+                <div class="stat-content">
+                    <span class="stat-value">47</span>
+                    <span class="stat-label">Views This Week</span>
+                </div>
+            </div>
+        </div>
+        
+        @* Listings *@
+        <div class="listings-section">
+            @foreach (var listing in _dashboardListings)
+            {
+                <div class="listing-card-full">
+                    <div class="listing-image">
+                        <img src="/images/property-hero.jpg" alt="@listing.Address" />
+                        <div class="listing-badges">
+                            <span class="badge live">● @listing.Status</span>
+                        </div>
+                        @* Status Watermark - Open or Exclusive *@
+                        <div class="status-watermark @(isExclusive ? "exclusive" : "open")">
+                            @(isExclusive ? "EXCLUSIVE" : "OPEN LISTING")
+                        </div>
+                    </div>
+                    <div class="listing-details">
+                        <div class="listing-header">
+                            <div>
+                                <h2>@listing.Address</h2>
+                                <p class="address">@listing.Suburb, @listing.State @listing.Postcode</p>
+                            </div>
+                            <div class="listing-actions">
+                                <button class="action-btn">Edit</button>
+                                <button class="action-btn">Pause</button>
+                            </div>
+                        </div>
+                        
+                        <div class="listing-specs">
+                            <span>🛏 @listing.Bedrooms beds</span>
+                            <span>🛁 @listing.Bathrooms baths</span>
+                            <span>🚗 @listing.CarSpaces cars</span>
+                            <span>📐 @listing.LandSize m²</span>
+                        </div>
+                        
+                        <div class="listing-meta">
+                            <div class="meta-item">
+                                <span class="meta-label">Listed</span>
+                                <span class="meta-value">@GetTimeAgo(listing.CreatedAt)</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-label">Price Guide</span>
+                                <span class="meta-value">@listing.PriceDisplay</span>
+                            </div>
+                        </div>
+                    </div>
+                
+                @* Platform Exposure Section *@
+                <div class="syndication-section">
+                    <div class="syndication-header">
+                        <h4>Global Exposure</h4>
+                        <span class="syndication-summary">15 of 16 platforms live</span>
+                    </div>
+
+                    <GlobeSyndication />
+                </div>
+                
+                @* Agent Proposals Section - Commission-based exclusive representation offers *@
+                @* Hybrid Team Section - Split Exclusivity *@
+                <div class="proposals-section hybrid-team-section">
+                    <div class="offers-header">
+                        <div class="header-with-badge">
+                            <h3>The Hybrid Team</h3>
+                            <span class="section-badge hybrid-badge">Local + Global Power</span>
+                        </div>
+                        <button class="mini-btn secondary" style="margin-left: auto;" @onclick="OpenInviteModal">Invite Agent to Bid</button>
+                    </div>
+                    <p class="section-desc">You retain a Local Agent for high-touch local buyers, while the Platform secures interstate and international interest.</p>
+
+                    @if (_showInviteModal)
+                    {
+                        <div class="modal-backdrop" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;">
+                            <div class="modal-content" style="background: white; border-radius: 16px; width: 450px; padding: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
+                                <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                    <h3 style="margin: 0; font-size: 1.25rem;">Invite Local Specialist</h3>
+                                    <button @onclick="CloseInviteModal" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #6b7280;">&times;</button>
+                                </div>
+                                
+                                <div class="modal-body">
+                                    <p style="color: #6b7280; font-size: 0.95rem; margin-bottom: 20px;">
+                                        Send a proposal request to your preferred local agent. They will invited to bid for your exclusive local listing.
+                                    </p>
+                                    
+                                    <div class="form-group" style="margin-bottom: 16px;">
+                                        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #374151; margin-bottom: 6px;">Agency Name</label>
+                                        <input @bind="_inviteAgency" placeholder="e.g. Ray White New Farm" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.95rem;" />
+                                    </div>
+                                    
+                                    <div class="form-group" style="margin-bottom: 24px;">
+                                        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #374151; margin-bottom: 6px;">Agent Email</label>
+                                        <input @bind="_inviteEmail" placeholder="agent@agency.com.au" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.95rem;" />
+                                    </div>
+                                    
+                                    <div class="modal-actions" style="display: flex; gap: 12px; justify-content: flex-end;">
+                                        <button class="mini-btn secondary" @onclick="CloseInviteModal" style="padding: 10px 20px;">Cancel</button>
+                                        <button class="mini-btn primary" @onclick="SendInvite" style="padding: 10px 20px;">Send Invitation</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    
+                    <div class="hybrid-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 20px;">
+                        
+                        @* Card 1: Local Expert *@
+                        <div class="proposal-card local-expert-card" style="border-left: 4px solid #4f46e5;">
+                            <div class="card-role-header" style="margin-bottom: 12px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: #6b7280; font-weight: 600;">Local Specialist</div>
+                            <div class="proposal-header">
+                                <div class="agent-info">
+                                    <span class="agent-badge rw">RW</span>
+                                    <div class="agent-details">
+                                        <span class="agent-name">Sarah Chen</span>
+                                        <span class="agent-agency">Ray White Paddington</span>
+                                        <span class="jurisdiction-tag local">Exclusive: QLD</span>
+                                    </div>
+                                </div>
+                                <span class="status-indicator active">Active</span>
+                            </div>
+                            <div class="role-desc" style="margin: 16px 0; font-size: 0.9rem; color: #4b5563; line-height: 1.5;">
+                                Responsible for open homes, local inspections, and negotiating with QLD-based buyers.
+                            </div>
+                            <div class="proposal-terms">
+                                <div class="term-item">
+                                    <span class="term-label">Commission</span>
+                                    <span class="term-value">1.8%</span>
+                                </div>
+                                <div class="term-item">
+                                    <span class="term-label">Focus</span>
+                                    <span class="term-value">Local Buyers</span>
+                                </div>
+                            </div>
+                            <div class="proposal-actions">
+                                <button class="mini-btn" @onclick="() => ViewAgentProfile(Guid.Empty)">View Profile</button>
+                                <button class="mini-btn secondary">Message</button>
+                            </div>
+                        </div>
+                        
+                        @* Card 2: Global Platform *@
+                        <div class="proposal-card global-platform-card" style="border-left: 4px solid #10b981; background: linear-gradient(to bottom right, #ffffff, #f0fdf4);">
+                            <div class="card-role-header" style="margin-bottom: 12px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: #059669; font-weight: 600;">Global Reach Engine</div>
+                            <div class="proposal-header">
+                                <div class="agent-info">
+                                    <div class="agent-badge platform-logo" style="background: #10b981; color: white; display: flex; align-items: center; justify-content: center;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                                    </div>
+                                    <div class="agent-details">
+                                        <span class="agent-name">Aigents Platform</span>
+                                        <span class="agent-agency">Global Network</span>
+                                        <span class="jurisdiction-tag global" style="background: #d1fae5; color: #065f46;">Exclusive: Global</span>
+                                    </div>
+                                </div>
+                                <span class="status-indicator active" style="background: #10b981;">Live</span>
+                            </div>
+                            <div class="role-desc" style="margin: 16px 0; font-size: 0.9rem; color: #4b5563; line-height: 1.5;">
+                                Automates broadcasting to 132 countries, handles digital inquiries, and secures interstate capital.
+                            </div>
+                             <div class="proposal-terms">
+                                <div class="term-item">
+                                    <span class="term-label">Fee</span>
+                                    <span class="term-value">Fixed Rate</span>
+                                </div>
+                                <div class="term-item">
+                                    <span class="term-label">Reach</span>
+                                    <span class="term-value">1.5B+ People</span>
+                                </div>
+                            </div>
+                            <div class="proposal-actions">
+                                <button class="mini-btn primary">View Analytics</button>
+                                <button class="mini-btn secondary">Platform Settings</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                @* Activity Feed Section *@
+                <div class="activity-feed-section" style="margin-top: 24px; background: white; border-radius: 16px; padding: 24px; border: 1px solid #e5e7eb;">
+                    <div class="feed-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <div class="header-content">
+                            <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: #111827;">Live Broadcast Log</h3>
+                            <p style="margin: 4px 0 0; font-size: 0.9rem; color: #6b7280;">Real-time updates on global broadcast and agent activity.</p>
+                        </div>
+                        <span class="live-indicator" style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: #059669; background: #ecfdf5; padding: 4px 12px; border-radius: 20px; font-weight: 600;">
+                            <span class="pulse-dot" style="width: 8px; height: 8px; background: #10b981; border-radius: 50%;"></span>
+                            LIVE
+                        </span>
+                    </div>
+
+                    <div class="feed-list" style="display: flex; flex-direction: column; gap: 0;">
+                        @foreach (var activity in _activities)
+                        {
+                            <div class="feed-item" style="display: flex; gap: 16px; padding: 16px 0; border-bottom: 1px solid #f3f4f6;">
+                                <div class="feed-time" style="min-width: 80px; font-size: 0.85rem; color: #9ca3af; text-align: right; padding-top: 2px;">@activity.Time</div>
+                                <div class="feed-icon" style="width: 32px; height: 32px; border-radius: 50%; background: @activity.BgColor; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <span style="font-size: 14px;">@activity.Icon</span>
+                                </div>
+                                <div class="feed-content">
+                                    <div class="feed-title" style="font-size: 0.95rem; font-weight: 600; color: #374151;">@activity.Title</div>
+                                    <div class="feed-desc" style="font-size: 0.85rem; color: #6b7280; margin-top: 2px;">@activity.Description</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+                
+                @* Buyer Offers Section - Purchase offers from buyers *@
+                <div class="offers-section">
+                    <div class="offers-header">
+                        <h3>Purchase Offers (2)</h3>
+                        <a href="/my-offers" class="view-all">View all →</a>
+                    </div>
+                    
+                    <div class="offers-table">
+                        <div class="offer-row header">
+                            <span>Buyer</span>
+                            <span>Offer Amount</span>
+                            <span>Settlement</span>
+                            <span>Conditions</span>
+                            <span>Via</span>
+                            <span>Actions</span>
+                        </div>
+                        <div class="offer-row best">
+                            <span class="buyer-info">
+                                <span class="buyer-badge">JW</span>
+                                John Williams
+                                <span class="best-badge">Best Offer</span>
+                            </span>
+                            <span class="price highlight">$1,180,000</span>
+                            <span>30 days</span>
+                            <span class="condition cash">Cash Unconditional</span>
+                            <span class="via-agent">
+                                <span class="via-badge">LJ</span>
+                                LJ Hooker
+                            </span>
+                            <span class="row-actions">
+                                <button class="mini-btn primary" @onclick="() => AcceptOffer(Guid.Empty)">Accept</button>
+                                <button class="mini-btn" @onclick="() => ViewOffer(Guid.Empty)">View</button>
+                                <button class="mini-btn reject" @onclick="() => RejectOffer(Guid.Empty)">Reject</button>
+                            </span>
+                        </div>
+                        <div class="offer-row">
+                            <span class="buyer-info">
+                                <span class="buyer-badge">EM</span>
+                                Emily Martinez
+                            </span>
+                            <span class="price">$1,150,000</span>
+                            <span>60 days</span>
+                            <span class="condition finance">Subject to Finance</span>
+                            <span class="via-direct">Direct</span>
+                            <span class="row-actions">
+                                <button class="mini-btn" @onclick="() => ViewOffer(Guid.Empty)">View</button>
+                                <button class="mini-btn reject" @onclick="() => RejectOffer(Guid.Empty)">Reject</button>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+    </main>
+</div>
+
+<style>
+@@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+.dashboard-wrapper {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f8fafc;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
+
+.dash-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: white;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+}
+
+.logo-mark {
+    font-size: 20px;
+    color: #10b981;
+}
+
+.logo-text {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.nav-link {
+    font-size: 14px;
+    font-weight: 500;
+    color: #6b7280;
+    text-decoration: none;
+    padding: 8px 0;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.nav-link:hover {
+    color: #1a1a2e;
+}
+
+.nav-link.active {
+    color: #10b981;
+    border-bottom-color: #10b981;
+}
+
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.dash-main {
+    padding: 80px 24px 60px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.dash-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.header-left h1 {
+    font-size: 28px;
+    font-weight: 800;
+    color: #1a1a2e;
+    margin: 0 0 4px 0;
+}
+
+.header-left p {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 0;
+}
+
+.add-listing-btn {
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: inherit;
+}
+
+.add-listing-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
+}
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 32px;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.stat-card.highlight {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(16, 185, 129, 0.02));
+    border-color: rgba(16, 185, 129, 0.2);
+}
+
+.stat-icon {
+    font-size: 32px;
+}
+
+.stat-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 800;
+    color: #1a1a2e;
+}
+
+.stat-label {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+/* Listing Card Full */
+.listing-card-full {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.listing-image {
+    position: relative;
+    height: 280px;
+}
+
+.listing-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.listing-badges {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    display: flex;
+    gap: 8px;
+}
+
+.badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge.live {
+    background: rgba(16, 185, 129, 0.9);
+    color: white;
+}
+
+.badge.syndicated {
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    backdrop-filter: blur(8px);
+}
+
+.listing-details {
+    padding: 28px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.listing-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.listing-header h2 {
+    font-size: 24px;
+    font-weight: 800;
+    color: #1a1a2e;
+    margin: 0 0 4px 0;
+}
+
+.address {
+    font-size: 15px;
+    color: #6b7280;
+    margin: 0;
+}
+
+.listing-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.action-btn {
+    padding: 8px 16px;
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #4b5563;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+}
+
+.action-btn:hover {
+    border-color: #1a1a2e;
+}
+
+.listing-specs {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.listing-specs span {
+    font-size: 14px;
+    color: #4b5563;
+}
+
+.listing-meta {
+    display: flex;
+    gap: 40px;
+}
+
+.meta-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.meta-label {
+    font-size: 12px;
+    color: #9ca3af;
+    margin-bottom: 4px;
+}
+
+.meta-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a2e;
+}
+
+.portal-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.portal-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #d1d5db;
+}
+
+.portal-dot.active {
+    background: #10b981;
+}
+
+/* Offers Section */
+.offers-section {
+    padding: 28px;
+}
+
+.offers-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.offers-header h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0;
+}
+
+.view-all {
+    font-size: 14px;
+    color: #10b981;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.offers-table {
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.offer-row {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 0.8fr 0.8fr 1.2fr 1fr;
+    padding: 14px 20px;
+    gap: 12px;
+    align-items: center;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    font-size: 14px;
+    color: #4b5563;
+}
+
+.offer-row:last-child {
+    border-bottom: none;
+}
+
+.offer-row.header {
+    background: #f8fafc;
+    font-weight: 600;
+    color: #9ca3af;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.offer-row.best {
+    background: rgba(16, 185, 129, 0.04);
+}
+
+.agent-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    color: #1a1a2e;
+}
+
+.agent-badge {
+    width: 32px;
+    height: 32px;
+    background: #6b7280;
+    color: white;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.agent-badge.lj {
+    background: #f59e0b;
+}
+
+.agent-badge.mg {
+    background: #ec4899;
+}
+
+.best-badge {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 10px;
+    margin-left: 4px;
+}
+
+.price {
+    font-weight: 700;
+    color: #1a1a2e;
+}
+
+.price.highlight {
+    color: #059669;
+}
+
+.condition {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+.condition.cash {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+}
+
+.condition.finance {
+    background: rgba(251, 191, 36, 0.1);
+    color: #d97706;
+}
+
+.condition.approved {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+}
+
+.row-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.mini-btn {
+    padding: 6px 12px;
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #4b5563;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+}
+
+.mini-btn:hover {
+    border-color: #1a1a2e;
+}
+
+.mini-btn.primary {
+    background: #10b981;
+    color: white;
+    border-color: #10b981;
+}
+
+.mini-btn.primary:hover {
+    background: #059669;
+}
+
+.mini-btn.reject {
+    color: #dc2626;
+    border-color: rgba(220, 38, 38, 0.3);
+}
+
+.mini-btn.reject:hover {
+    background: rgba(220, 38, 38, 0.1);
+    border-color: #dc2626;
+}
+
+/* Status Watermark */
+.status-watermark {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    border-radius: 6px;
+    backdrop-filter: blur(8px);
+}
+
+.status-watermark.open {
+    background: rgba(16, 185, 129, 0.9);
+    color: white;
+}
+
+.status-watermark.exclusive {
+    background: rgba(139, 92, 246, 0.9);
+    color: white;
+}
+
+/* Syndication Section */
+.syndication-section {
+    padding: 24px 28px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.syndication-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.syndication-header h4 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0;
+}
+
+.syndication-summary {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.syndication-group-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #9ca3af;
+    margin: 20px 0 12px;
+    letter-spacing: 0.5px;
+}
+
+.platform-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(2, auto);
+    gap: 12px;
+}
+
+.platform-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: #f8fafc;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.platform-card:hover {
+    border-color: rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.platform-card.live {
+    background: rgba(16, 185, 129, 0.06);
+    border-color: rgba(16, 185, 129, 0.2);
+}
+
+.platform-icon {
+    font-size: 24px;
+}
+
+.platform-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.platform-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a2e;
+}
+
+.platform-status {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.platform-card.live .platform-status {
+    color: #10b981;
+    font-weight: 600;
+}
+
+.platform-arrow {
+    font-size: 16px;
+    color: #9ca3af;
+}
+
+/* Proposals Section */
+.proposals-section {
+    padding: 28px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.header-with-badge {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.section-badge {
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 12px;
+    text-transform: uppercase;
+}
+
+.section-desc {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 0 0 20px 0;
+}
+
+.proposals-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.proposal-card {
+    position: relative;
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 16px;
+    padding: 24px;
+    transition: all 0.2s;
+}
+
+.proposal-card:hover {
+    border-color: rgba(0, 0, 0, 0.12);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.proposal-card.featured {
+    border-color: rgba(16, 185, 129, 0.3);
+    background: rgba(16, 185, 129, 0.02);
+}
+
+.featured-badge {
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 10px;
+}
+
+.proposal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.agent-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.agent-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+
+.agent-agency {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.jurisdiction-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-top: 4px;
+    width: fit-content;
+}
+
+.jurisdiction-tag.local {
+    background: #e0e7ff;
+    color: #4f46e5;
+}
+
+.jurisdiction-tag.global {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.proposal-expires {
+    font-size: 12px;
+    color: #f59e0b;
+    font-weight: 600;
+}
+
+.proposal-terms {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 20px;
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: 12px;
+}
+
+.term-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.term-label {
+    font-size: 11px;
+    color: #9ca3af;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.term-value {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+
+.term-value.highlight {
+    color: #10b981;
+}
+
+.proposal-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* Buyer Offers */
+.buyer-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    color: #1a1a2e;
+}
+
+.buyer-badge {
+    width: 32px;
+    height: 32px;
+    background: #6366f1;
+    color: white;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.via-agent {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #4b5563;
+}
+
+.via-badge {
+    width: 24px;
+    height: 24px;
+    background: #f59e0b;
+    color: white;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.via-direct {
+    font-size: 13px;
+    color: #9ca3af;
+    font-style: italic;
+}
+
+.agent-badge.rw {
+    background: #dc2626;
+}
+
+/* Responsive */
+@@media (max-width: 1024px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .platform-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .offer-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .offer-row.header {
+        display: none;
+    }
+}
+
+@@media (max-width: 768px) {
+    .nav-links {
+        display: none;
+    }
+    
+    .dash-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .listing-meta {
+        flex-direction: column;
+        gap: 12px;
+    }
+}
+</style>
+
+
+@code {
+    // Listing state
+    private bool isExclusive = false;
+
+    // Invitation Modal State
+    private bool _showInviteModal = false;
+    private string _inviteAgency = "";
+    private string _inviteEmail = "";
+    
+    // Live Activity Simulation
+    private Timer? _activityTimer;
+    private Random _rnd = new Random();
+
+    [SupplyParameterFromQuery]
+    public string? Email { get; set; }
+
+    private List<Listing> _dashboardListings = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Fetch real listings if email provided
+        if (!string.IsNullOrEmpty(Email))
+        {
+            _dashboardListings = await ListingService.GetListingsForUserAsync(Email);
+        }
+
+        // Fallback to Demo Listing if none found (so dashboard isn't empty)
+        if (!_dashboardListings.Any())
+        {
+            _dashboardListings.Add(new Listing 
+            {
+                 Address = "67 Northview Outlook",
+                 Suburb = "Paddington",
+                 State = "QLD",
+                 Postcode = "4064",
+                 Bedrooms = 4,
+                 Bathrooms = 2,
+                 CarSpaces = 2,
+                 LandSize = 650, // m2
+                 PriceDisplay = "$1.15M - $1.25M",
+                 Status = ListingStatus.Active,
+                 CreatedAt = DateTime.UtcNow.AddDays(-3)
+            });
+        }
+
+        // Start "Live" simulation with a random interval between 3-10 seconds
+        _activityTimer = new Timer(SimulateLiveActivity, null, 2000, 5000);
+    }
+    
+    private string GetTimeAgo(DateTime date)
+    {
+        var span = DateTime.UtcNow - date;
+        if (span.TotalMinutes < 1) return "Just now";
+        if (span.TotalHours < 1) return $"{(int)span.TotalMinutes}m ago";
+        if (span.TotalDays < 1) return $"{(int)span.TotalHours}h ago";
+        return $"{(int)span.TotalDays}d ago";
+    }
+    
+    private void SimulateLiveActivity(object? state)
+    {
+        // 30% chance to generate an event on each tick to vary the rhythm
+        if (_rnd.Next(0, 10) > 3) return;
+
+        var eventTypes = new[]
+        {
+            new { Icon = "👀", Color = "#60a5fa", Title = "New Global View", Desc = "Property viewed by investor in {0}" },
+            new { Icon = "🔥", Color = "#f87171", Title = "Hot Lead Alert", Desc = "High-intent buyer {0} just saved your listing" },
+            new { Icon = "📱", Color = "#c084fc", Title = "Social Share", Desc = "Listing shared on {0} by local influencer" },
+            new { Icon = "📄", Color = "#4ade80", Title = "Brochure Downloaded", Desc = "Information memorandum downloaded by {0}" }
+        };
+
+        var locations = new[] { "Singapore", "London, UK", "Sydney, NSW", "Dubai, UAE", "Hong Kong", "California, USA" };
+        var networks = new[] { "Facebook", "WeChat", "WhatsApp", "LinkedIn" };
+        var buyers = new[] { "(Verified)", "(Returning)", "(Cash Buyer)" };
+        var agencies = new[] { "Buyers Agent", "Local Agency", "Private Investor" };
+
+        var evt = eventTypes[_rnd.Next(eventTypes.Length)];
+        string desc = "";
+
+        if (evt.Title.Contains("Global")) desc = string.Format(evt.Desc, locations[_rnd.Next(locations.Length)]);
+        else if (evt.Title.Contains("Hot")) desc = string.Format(evt.Desc, buyers[_rnd.Next(buyers.Length)]);
+        else if (evt.Title.Contains("Social")) desc = string.Format(evt.Desc, networks[_rnd.Next(networks.Length)]);
+        else if (evt.Title.Contains("Brochure")) desc = string.Format(evt.Desc, agencies[_rnd.Next(agencies.Length)]);
+
+        InvokeAsync(() =>
+        {
+            _activities.Insert(0, new("Just now", evt.Icon, evt.Color, evt.Title, desc));
+            if (_activities.Count > 8) _activities.RemoveAt(_activities.Count - 1); // Keep list size manageable
+            StateHasChanged();
+        });
+        
+        // Randomize next tick
+        _activityTimer?.Change(_rnd.Next(3000, 12000), _rnd.Next(3000, 12000));
+    }
+
+    public void Dispose()
+    {
+        _activityTimer?.Dispose();
+    }
+
+    private void OpenInviteModal() => _showInviteModal = true;
+    private void CloseInviteModal() => _showInviteModal = false;
+
+    private void SendInvite()
+    {
+        if (string.IsNullOrWhiteSpace(_inviteAgency)) _inviteAgency = "Local Agent";
+        
+        // Add to activity feed
+        _activities.Insert(0, new(
+            "Just now", 
+            "📩", 
+            "#e879f9", 
+            $"Invitation Sent to {_inviteAgency}", 
+            $"Co-listing proposal sent to {_inviteEmail}."
+        ));
+
+        // Reset and close
+        _inviteAgency = "";
+        _inviteEmail = "";
+        _showInviteModal = false;
+    }
+    
+    private void CreateListing()
+    {
+        Navigation.NavigateTo("/list");
+    }
+    
+    // Syndication management
+    private void ManagePlatform(SyndicationPlatform platform)
+    {
+        // TODO: Open modal to manage syndication for this platform
+        Console.WriteLine($"Managing platform: {platform}");
+    }
+    
+    // Agent proposal handlers
+    private void ViewAgentProfile(Guid agentId)
+    {
+        // TODO: Open agent profile modal
+        Console.WriteLine($"Viewing agent profile: {agentId}");
+    }
+    
+    private void AcceptProposal(Guid proposalId)
+    {
+        // TODO: Accept proposal and go exclusive
+        isExclusive = true;
+        Console.WriteLine($"Accepting proposal: {proposalId}");
+    }
+    
+    // Buyer offer handlers
+    private void ViewOffer(Guid offerId)
+    {
+        // TODO: Open offer detail modal
+        Console.WriteLine($"Viewing offer: {offerId}");
+    }
+    
+    private void AcceptOffer(Guid offerId)
+    {
+        // TODO: Accept purchase offer
+        Console.WriteLine($"Accepting offer: {offerId}");
+    }
+    
+    private void RejectOffer(Guid offerId)
+    {
+        // TODO: Reject purchase offer
+        Console.WriteLine($"Rejecting offer: {offerId}");
+    }
+
+    // Activity Feed Data
+    private List<ActivityItem> _activities = new()
+    {
+        new("10m ago", "✨", "#818cf8", "Broadcast to Juwai (China)", "Property listing translated and live on Juwai network."),
+        new("32m ago", "📢", "#fbbf24", "Alert Sent to 15 Buyers Agents", "Notify Match: 4 Bed / 2 Bath / Paddington focus."),
+        new("1h ago", "💼", "#fca5a5", "Exclusivity Proposal Received", "Ray White Paddington has submitted a local exclusivity proposal."),
+        new("2h ago", "🌐", "#34d399", "Global Broadcast Live", "Listing is active on 15 of 16 global platforms.")
+    };
+
+    public record ActivityItem(string Time, string Icon, string BgColor, string Title, string Description);
+}

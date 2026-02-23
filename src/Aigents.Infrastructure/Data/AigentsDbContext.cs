@@ -19,7 +19,7 @@ public class AigentsDbContext : DbContext
     public DbSet<Agent> Agents => Set<Agent>();
     public DbSet<ListingInquiry> ListingInquiries => Set<ListingInquiry>();
     public DbSet<ListingDistribution> ListingDistributions => Set<ListingDistribution>();
-
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

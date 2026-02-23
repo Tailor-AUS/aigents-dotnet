@@ -113,6 +113,162 @@ namespace Aigents.Infrastructure.Data.Migrations
                     b.ToTable("Agents");
                 });
 
+            modelBuilder.Entity("Aigents.Domain.Entities.AgentProposal", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AgentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("CommissionFlat")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("CommissionNotes")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("CommissionRate")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Exclusivity")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ListingId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("MarketingPlan")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<int>("ProposedCampaignDays")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Region")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("RespondedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SellingPoints")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Strategy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("SuggestedPriceRange")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AgentId");
+
+                    b.HasIndex("ListingId");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("AgentProposals");
+                });
+
+            modelBuilder.Entity("Aigents.Domain.Entities.BuyerOffer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("BuyerEmail")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<Guid?>("BuyerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("BuyerName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("BuyerPhone")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ConditionNotes")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<int>("Conditions")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ListingId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("OfferAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("OfferExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("RespondedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ResponseNotes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("SettlementDays")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("SubmittedByAgentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BuyerId");
+
+                    b.HasIndex("ListingId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("SubmittedByAgentId");
+
+                    b.ToTable("BuyerOffers");
+                });
+
             modelBuilder.Entity("Aigents.Domain.Entities.Conversation", b =>
                 {
                     b.Property<Guid>("Id")
@@ -201,6 +357,9 @@ namespace Aigents.Infrastructure.Data.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<Guid?>("ExclusiveAgentId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Features")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -215,6 +374,9 @@ namespace Aigents.Infrastructure.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("LandSize")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Mode")
                         .HasColumnType("int");
 
                     b.Property<string>("Postcode")
@@ -261,6 +423,8 @@ namespace Aigents.Infrastructure.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedAt");
+
+                    b.HasIndex("ExclusiveAgentId");
 
                     b.HasIndex("Postcode");
 
@@ -381,6 +545,46 @@ namespace Aigents.Infrastructure.Data.Migrations
                     b.ToTable("Messages");
                 });
 
+            modelBuilder.Entity("Aigents.Domain.Entities.SyndicationStatus", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ExternalListingId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ExternalUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("LastSyncAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ListingId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Platform")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("PublishedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("State")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ListingId");
+
+                    b.ToTable("SyndicationStatus");
+                });
+
             modelBuilder.Entity("Aigents.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -448,6 +652,50 @@ namespace Aigents.Infrastructure.Data.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("Aigents.Domain.Entities.AgentProposal", b =>
+                {
+                    b.HasOne("Aigents.Domain.Entities.Agent", "Agent")
+                        .WithMany()
+                        .HasForeignKey("AgentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Aigents.Domain.Entities.Listing", "Listing")
+                        .WithMany("AgentProposals")
+                        .HasForeignKey("ListingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Agent");
+
+                    b.Navigation("Listing");
+                });
+
+            modelBuilder.Entity("Aigents.Domain.Entities.BuyerOffer", b =>
+                {
+                    b.HasOne("Aigents.Domain.Entities.User", "Buyer")
+                        .WithMany()
+                        .HasForeignKey("BuyerId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Aigents.Domain.Entities.Listing", "Listing")
+                        .WithMany("BuyerOffers")
+                        .HasForeignKey("ListingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Aigents.Domain.Entities.Agent", "SubmittedByAgent")
+                        .WithMany()
+                        .HasForeignKey("SubmittedByAgentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Buyer");
+
+                    b.Navigation("Listing");
+
+                    b.Navigation("SubmittedByAgent");
+                });
+
             modelBuilder.Entity("Aigents.Domain.Entities.Conversation", b =>
                 {
                     b.HasOne("Aigents.Domain.Entities.User", "User")
@@ -461,11 +709,17 @@ namespace Aigents.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Aigents.Domain.Entities.Listing", b =>
                 {
+                    b.HasOne("Aigents.Domain.Entities.Agent", "ExclusiveAgent")
+                        .WithMany()
+                        .HasForeignKey("ExclusiveAgentId");
+
                     b.HasOne("Aigents.Domain.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("ExclusiveAgent");
 
                     b.Navigation("User");
                 });
@@ -519,6 +773,17 @@ namespace Aigents.Infrastructure.Data.Migrations
                     b.Navigation("Conversation");
                 });
 
+            modelBuilder.Entity("Aigents.Domain.Entities.SyndicationStatus", b =>
+                {
+                    b.HasOne("Aigents.Domain.Entities.Listing", "Listing")
+                        .WithMany("SyndicationStatuses")
+                        .HasForeignKey("ListingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Listing");
+                });
+
             modelBuilder.Entity("Aigents.Domain.Entities.Agent", b =>
                 {
                     b.Navigation("Inquiries");
@@ -531,7 +796,13 @@ namespace Aigents.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Aigents.Domain.Entities.Listing", b =>
                 {
+                    b.Navigation("AgentProposals");
+
+                    b.Navigation("BuyerOffers");
+
                     b.Navigation("Inquiries");
+
+                    b.Navigation("SyndicationStatuses");
                 });
 
             modelBuilder.Entity("Aigents.Domain.Entities.User", b =>

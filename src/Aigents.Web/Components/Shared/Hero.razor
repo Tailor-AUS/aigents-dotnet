@@ -1,104 +1,238 @@
+@using Aigents.Web.Services
+@inject NavigationManager Nav
+@inject ISiteContext SiteContext
+@inject IJSRuntime JSRuntime
+
 @* ═══════════════════════════════════════════════════════════════
-   HERO COMPONENT
-   Landing page with mode toggle and CTA
+   TIER 1 APPLE-STYLE HERO
+   Premium design with crystal-clear value proposition
 ═══════════════════════════════════════════════════════════════ *@
 
-<div class="orb orb-1 @(_mode == "buy" ? "orb-buy" : "orb-sell")"></div>
-<div class="orb orb-2 @(_mode == "buy" ? "orb-buy" : "orb-sell")"></div>
-
-<nav class="nav">
-    <div class="logo">
-        <div class="logo-icon">✦</div>
-        <span class="logo-text">aigents<span class="logo-au">.au</span></span>
-    </div>
-    <button class="btn-primary @(_mode)" @onclick="OnGetStarted">
-        Get Started →
-    </button>
-</nav>
-
-<div class="hero-content">
-    <div class="badge">
-        <span class="badge-dot @(_mode)"></span>
-        AI-Powered Real Estate
-    </div>
+<div class="hero-wrapper" @onmousemove="HandleMouseMove">
+    @* Interactive ripple background *@
+    <canvas id="ripple-canvas" class="ripple-canvas"></canvas>
+    <div class="hero-bg"></div>
     
-    <p class="tagline">Hire an AIGENT to</p>
-    
-    <div class="word-container">
-        <span class="hero-word @(_mode)">@_mode.ToUpper()</span>
-    </div>
-    
-    <div class="toggle-container">
-        <button class="@BuyToggleClass" 
-                @onclick="SetModeBuy">
-            BUY
-        </button>
-        <button class="@SellToggleClass" 
-                @onclick="SetModeSell">
-            SELL
-        </button>
-    </div>
-    
-    <button class="cta-card" @onclick="OnGetStarted">
-        <div class="cta-inner">
-            <div class="cta-content">
-                <span class="cta-label">Ready to explore</span>
-                <span class="cta-title">Chat with your AI agent</span>
+    @* Navigation *@
+    <nav class="hero-nav">
+        <div class="nav-container">
+            <div class="logo" @onclick="GoHome">
+                <span class="logo-mark">◆</span>
+                <span class="logo-text">aigents</span>
             </div>
-            <div class="cta-arrow @(_mode)">→</div>
+            <div class="nav-links">
+                <a href="#how-it-works" class="nav-link">How It Works</a>
+                <a href="/agents" class="nav-link agent-link">For Agents</a>
+                <button class="nav-cta" @onclick="ScrollToListing">Get Started</button>
+            </div>
         </div>
-    </button>
+    </nav>
+
+    @* Hero Section - Split Layout *@
+    <section class="hero-section">
+        <div class="hero-grid">
+            @* Left Content *@
+            <div class="hero-left animate-fade-up">
+                <div class="eyebrow">
+                    <span class="eyebrow-icon">◆</span>
+                    <span>Global Reach Engine</span>
+                </div>
+                
+                <h1 class="hero-headline">
+                    Test the Market.<br/>
+                    <span class="headline-gradient">Risk Free.</span>
+                </h1>
+                
+                <p class="hero-subheadline">
+                    Curious what your home is worth? Broadcast your listing to international markets for free.
+                    Gauge buyer interest before you commit to an agent.
+                </p>
+                
+                @* Address Input CTA *@
+                <div class="cta-input-group">
+                    <div class="input-wrapper">
+                        <AddressAutocomplete OnAddressSelected="HandleAddressSelected" 
+                                           Placeholder="Enter your property address"
+                                           Class="address-input" />
+                        <button class="input-submit" @onclick="HandleSubmit">
+                            Start Free
+                            <span class="cta-arrow">→</span>
+                        </button>
+                    </div>
+                </div>
+                
+                @* Trust Badges *@
+                <div class="trust-badges">
+                    <div class="trust-badge">
+                        <span class="badge-check">✓</span>
+                        <span>No Upfront Cost</span>
+                    </div>
+                    <div class="trust-badge">
+                        <span class="badge-check">✓</span>
+                        <span>16+ Global Markets</span>
+                    </div>
+                    <div class="trust-badge">
+                        <span class="badge-check">✓</span>
+                        <span>Let Agents Compete</span>
+                    </div>
+                </div>
+            </div>
+            
+            @* Right Visual *@
+            <div class="hero-right animate-fade-up delay-2">
+                <div class="mockup-container">
+                    @* Phone Mockup *@
+                    <div class="phone-mockup">
+                        <div class="phone-screen">
+                            <div class="screen-header">
+                                <span class="screen-title">Market Status</span>
+                                <span class="screen-status live">● Active</span>
+                            </div>
+                            <div class="property-card">
+                                <img src="images/property-hero.jpg" alt="67 Northview Outlook" class="property-image" />
+                                <div class="property-details">
+                                    <div class="property-address">67 Northview Outlook</div>
+                                    <div class="property-type">Global Campaign • 24h Active</div>
+                                </div>
+                            </div>
+                            <div class="offers-section">
+                                <div class="offers-title">Global Exposure (16)</div>
+                                <div class="offer-item">
+                                    <div class="offer-left">
+                                        <div class="offer-agent">Juwai (China)</div>
+                                        <div class="offer-terms">Mandarin • WeChat Ready</div>
+                                    </div>
+                                    <div class="offer-right">
+                                        <div class="offer-price">Live</div>
+                                        <div class="offer-comm">High Interest</div>
+                                    </div>
+                                </div>
+                                <div class="offer-item highlight">
+                                    <div class="offer-left">
+                                        <div class="offer-agent">Zillow (USA)</div>
+                                        <div class="offer-terms">Premium Placement</div>
+                                    </div>
+                                    <div class="offer-right">
+                                        <div class="offer-price">Live</div>
+                                        <div class="offer-comm">Top 5%</div>
+                                    </div>
+                                </div>
+                                <div class="offer-item">
+                                    <div class="offer-left">
+                                        <div class="offer-agent">Rightmove (UK)</div>
+                                        <div class="offer-terms">London Focus</div>
+                                    </div>
+                                    <div class="offer-right">
+                                        <div class="offer-price">Live</div>
+                                        <div class="offer-comm">Active</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    @* Floating Badges *@
+                    <div class="floating-badge badge-1">
+                        <span class="float-icon">🌏</span>
+                        <div class="float-text">
+                            <strong>16 Markets</strong>
+                            <span>Broadcasting Live</span>
+                        </div>
+                    </div>
+                    <div class="floating-badge badge-2">
+                        <span class="float-icon">📈</span>
+                        <div class="float-text">
+                            <strong>+450 Views</strong>
+                            <span>International Traffic</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
     
-    <div class="stats">
-        <div class="stat">
-            <span class="stat-num">130+</span>
-            <span class="stat-label">Suburbs</span>
+    @* How It Works Section *@
+    <section class="how-section" id="how-it-works">
+        <div class="how-container">
+            <h2 class="how-title">How it works</h2>
+            <div class="how-steps">
+                <div class="how-step">
+                    <div class="step-num">01</div>
+                    <h3>List in 60 seconds</h3>
+                    <p>Enter your address and our AI instantly fetches property data. Go live for $0 — no credit card required.</p>
+                </div>
+                <div class="how-step">
+                    <div class="step-num">02</div>
+                    <h3>Watch interest come in</h3>
+                    <p>See real-time buyer views, agent proposals, and offers from around the world on your live dashboard.</p>
+                </div>
+                <div class="how-step">
+                    <div class="step-num">03</div>
+                    <h3>Choose your path</h3>
+                    <p>Accept a buyer offer directly, or appoint an agent to close the sale. Your property, your choice.</p>
+                </div>
+            </div>
         </div>
-        <div class="stat">
-            <span class="stat-num">32</span>
-            <span class="stat-label">AI Tools</span>
-        </div>
-        <div class="stat">
-            <span class="stat-num">24/7</span>
-            <span class="stat-label">Available</span>
-        </div>
-    </div>
+    </section>
 </div>
 
-<div class="footer">Brisbane & Gold Coast</div>
 
 @code {
     [Parameter]
-    public EventCallback OnGetStarted { get; set; }
+    public EventCallback<string> OnGetStarted { get; set; }
 
-    private string _mode = "buy";
-    private System.Timers.Timer? _timer;
+    private string _address = "";
+    private double _lat;
+    private double _lng;
+    private bool _rippleInitialized = false;
 
-    protected override void OnInitialized()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        _timer = new System.Timers.Timer(3000);
-        _timer.Elapsed += (s, e) => InvokeAsync(() =>
+        if (firstRender && !_rippleInitialized)
         {
-            _mode = _mode == "buy" ? "sell" : "buy";
-            StateHasChanged();
-        });
-        _timer.Start();
+            _rippleInitialized = true;
+            await InitializeRippleEffect();
+        }
     }
 
-    private void SetMode(string mode)
+    private async Task InitializeRippleEffect()
     {
-        _mode = mode;
-        _timer?.Stop();
+        await JSRuntime.InvokeVoidAsync("propertyViz.initRipple");
     }
 
-    private void SetModeBuy() => SetMode("buy");
-    private void SetModeSell() => SetMode("sell");
 
-    private string BuyToggleClass => _mode == "buy" ? "toggle-btn active buy" : "toggle-btn";
-    private string SellToggleClass => _mode == "sell" ? "toggle-btn active sell" : "toggle-btn";
-
-    public void Dispose()
+    private void HandleMouseMove(MouseEventArgs e)
     {
-        _timer?.Dispose();
+        // Mouse tracking handled by JS
+    }
+
+    private void GoHome()
+    {
+        Nav.NavigateTo("/", forceLoad: true);
+    }
+
+    private void ScrollToListing()
+    {
+        // Scroll to the listing card - handled by anchor link in production
+    }
+
+    private async Task HandleAddressSelected(AddressAutocomplete.AddressResult result)
+    {
+        _address = result.FullAddress;
+        _lat = result.Lat;
+        _lng = result.Lng;
+        HandleSubmit();
+    }
+
+    private void HandleSubmit()
+    {
+        if (!string.IsNullOrWhiteSpace(_address))
+        {
+            var url = $"/list?address={Uri.EscapeDataString(_address)}";
+            if (_lat != 0) url += $"&lat={_lat}&lng={_lng}";
+            Nav.NavigateTo(url);
+        }
     }
 }
+
+

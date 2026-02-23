@@ -1,0 +1,20 @@
+﻿  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Aigents.ServiceDefaults -> C:\Users\knoxh\Downloads\aigents-dotnet\aigents-dotnet\src\Aigents.ServiceDefaults\bin\Debug\net9.0\Aigents.ServiceDefaults.dll
+C:\Users\knoxh\Downloads\aigents-dotnet\aigents-dotnet\src\Aigents.Web\Components\App.razor(232,47): error RZ1005: "')) {" is not valid at the start of a code block.  Only identifiers, keywords, comments, "(" and "{" are valid. [C:\Users\knoxh\Downloads\aigents-dotnet\aigents-dotnet\src\Aigents.Web\Aigents.Web.csproj]
+C:\Users\knoxh\Downloads\aigents-dotnet\aigents-dotnet\src\Aigents.Web\Components\App.razor(232,47): error CS1525: Invalid expression term ')' [C:\Users\knoxh\Downloads\aigents-dotnet\aigents-dotnet\src\Aigents.Web\Aigents.Web.csproj]
+C:\Users\knoxh\Downloads\aigents-dotnet\aigents-dotnet\src\Aigents.Web\Components\Pages\Explore.razor(418,24): warning CS1998: This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread. [C:\Users\knoxh\Downloads\aigents-dotnet\aigents-dotnet\src\Aigents.Web\Aigents.Web.csproj]
+C:\Users\knoxh\Downloads\aigents-dotnet\aigents-dotnet\src\Aigents.Web\Components\Pages\Explore.razor(262,20): warning CS0414: The field 'Explore._sortBy' is assigned but its value is never used [C:\Users\knoxh\Downloads\aigents-dotnet\aigents-dotnet\src\Aigents.Web\Aigents.Web.csproj]
+C:\Users\knoxh\Downloads\aigents-dotnet\aigents-dotnet\src\Aigents.Web\Components\Pages\Explore.razor(242,18): warning CS0414: The field 'Explore._isLoading' is assigned but its value is never used [C:\Users\knoxh\Downloads\aigents-dotnet\aigents-dotnet\src\Aigents.Web\Aigents.Web.csproj]
+
+Build FAILED.
+
+C:\Users\knoxh\Downloads\aigents-dotnet\aigents-dotnet\src\Aigents.Web\Components\Pages\Explore.razor(418,24): warning CS1998: This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread. [C:\Users\knoxh\Downloads\aigents-dotnet\aigents-dotnet\src\Aigents.Web\Aigents.Web.csproj]
+C:\Users\knoxh\Downloads\aigents-dotnet\aigents-dotnet\src\Aigents.Web\Components\Pages\Explore.razor(262,20): warning CS0414: The field 'Explore._sortBy' is assigned but its value is never used [C:\Users\knoxh\Downloads\aigents-dotnet\aigents-dotnet\src\Aigents.Web\Aigents.Web.csproj]
+C:\Users\knoxh\Downloads\aigents-dotnet\aigents-dotnet\src\Aigents.Web\Components\Pages\Explore.razor(242,18): warning CS0414: The field 'Explore._isLoading' is assigned but its value is never used [C:\Users\knoxh\Downloads\aigents-dotnet\aigents-dotnet\src\Aigents.Web\Aigents.Web.csproj]
+C:\Users\knoxh\Downloads\aigents-dotnet\aigents-dotnet\src\Aigents.Web\Components\App.razor(232,47): error RZ1005: "')) {" is not valid at the start of a code block.  Only identifiers, keywords, comments, "(" and "{" are valid. [C:\Users\knoxh\Downloads\aigents-dotnet\aigents-dotnet\src\Aigents.Web\Aigents.Web.csproj]
+C:\Users\knoxh\Downloads\aigents-dotnet\aigents-dotnet\src\Aigents.Web\Components\App.razor(232,47): error CS1525: Invalid expression term ')' [C:\Users\knoxh\Downloads\aigents-dotnet\aigents-dotnet\src\Aigents.Web\Aigents.Web.csproj]
+    3 Warning(s)
+    2 Error(s)
+
+Time Elapsed 00:00:01.14
