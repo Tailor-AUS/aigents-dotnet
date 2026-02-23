@@ -164,6 +164,29 @@ resource sqlFirewallAllowAzure 'Microsoft.Sql/servers/firewallRules@2022-05-01-p
 }
 
 // ───────────────────────────────────────────────────────────────
+// USER ASSIGNED IDENTITY & ACR ROLE ASSIGNMENT
+// ───────────────────────────────────────────────────────────────
+
+resource acrPullIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
+  name: '${appName}-acr-id-${suffix}'
+  location: location
+}
+
+resource acr 'Microsoft.ContainerRegistry/registries@2023-07-01' existing = {
+  name: acrName
+}
+
+resource acrPullRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(acr.id, acrPullIdentity.id, 'acrpull')
+  scope: acr
+  properties: {
+    principalId: acrPullIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
+  }
+}
+
+// ───────────────────────────────────────────────────────────────
 // CONTAINER APP - API
 // ───────────────────────────────────────────────────────────────
 
@@ -171,6 +194,9 @@ resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
   name: '${appName}-api-${suffix}'
   location: location
   tags: tags
+  dependsOn: [
+    acrPullRole
+  ]
   properties: {
     managedEnvironmentId: containerAppsEnv.id
     configuration: {
@@ -187,7 +213,7 @@ resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
       registries: [
         {
           server: '${acrName}.azurecr.io'
-          identity: 'system'
+          identity: acrPullIdentity.id
         }
       ]
       secrets: [
@@ -299,7 +325,10 @@ resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
     }
   }
   identity: {
-    type: 'SystemAssigned'
+    type: 'SystemAssigned, UserAssigned'
+    userAssignedIdentities: {
+      '${acrPullIdentity.id}': {}
+    }
   }
 }
 
@@ -311,6 +340,9 @@ resource webApp 'Microsoft.App/containerApps@2023-05-01' = {
   name: '${appName}-web-${suffix}'
   location: location
   tags: tags
+  dependsOn: [
+    acrPullRole
+  ]
   properties: {
     managedEnvironmentId: containerAppsEnv.id
     configuration: {
@@ -322,7 +354,7 @@ resource webApp 'Microsoft.App/containerApps@2023-05-01' = {
       registries: [
         {
           server: '${acrName}.azurecr.io'
-          identity: 'system'
+          identity: acrPullIdentity.id
         }
       ]
       secrets: [
@@ -410,35 +442,10 @@ resource webApp 'Microsoft.App/containerApps@2023-05-01' = {
     }
   }
   identity: {
-    type: 'SystemAssigned'
-  }
-}
-
-// ───────────────────────────────────────────────────────────────
-// ACR ROLE ASSIGNMENTS
-// ───────────────────────────────────────────────────────────────
-
-resource acr 'Microsoft.ContainerRegistry/registries@2023-07-01' existing = {
-  name: acrName
-}
-
-resource apiAcrPull 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(acr.id, apiApp.id, 'acrpull')
-  scope: acr
-  properties: {
-    principalId: apiApp.identity.principalId
-    principalType: 'ServicePrincipal'
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
-  }
-}
-
-resource webAcrPull 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(acr.id, webApp.id, 'acrpull')
-  scope: acr
-  properties: {
-    principalId: webApp.identity.principalId
-    principalType: 'ServicePrincipal'
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
+    type: 'SystemAssigned, UserAssigned'
+    userAssignedIdentities: {
+      '${acrPullIdentity.id}': {}
+    }
   }
 }
 
